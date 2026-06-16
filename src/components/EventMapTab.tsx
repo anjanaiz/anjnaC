@@ -261,7 +261,28 @@ export const EventMapTab: React.FC = () => {
   });
 
   useEffect(() => {
+    const fetchGitDataOnMount = async () => {
+      try {
+        const res = await fetch("/api/github/data");
+        const json = await res.json();
+        if (json.success) {
+          if (json.markers && json.markers.length > 0) {
+            setMarkers(json.markers);
+          }
+          if (json.customCategories && json.customCategories.length > 0) {
+            setCustomCategories(json.customCategories);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load initial GitHub map data on mount", e);
+      }
+    };
+    fetchGitDataOnMount();
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('chakra_event_custom_categories_v4', JSON.stringify(customCategories));
+    window.dispatchEvent(new Event('chakra_map_data_changed'));
   }, [customCategories]);
 
   // Custom marker configuration state
@@ -324,6 +345,7 @@ export const EventMapTab: React.FC = () => {
   // Synchronize local storage
   useEffect(() => {
     localStorage.setItem('chakra_event_layout_markers_v4', JSON.stringify(markers));
+    window.dispatchEvent(new Event('chakra_map_data_changed'));
   }, [markers]);
 
   const handleAddMarker = (e: React.FormEvent) => {

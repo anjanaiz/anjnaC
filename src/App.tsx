@@ -29,7 +29,8 @@ import {
   ListTodo,
   GitBranch,
   Github,
-  XCircle
+  XCircle,
+  History
 } from 'lucide-react';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType } from './firebase';
@@ -91,12 +92,112 @@ export default function App() {
   const [repoBranchInput, setRepoBranchInput] = useState('main');
   const [isConfiguringRepo, setIsConfiguringRepo] = useState(false);
 
+  // High-fidelity GitHub sync tracker states
+  const [gitLastSynced, setGitLastSynced] = useState<string | null>(() => {
+    return localStorage.getItem('chakra_github_last_synced') || null;
+  });
+  const [gitCommits, setGitCommits] = useState<any[]>([]);
+  const [gitIsSyncing, setGitIsSyncing] = useState(false);
+  const [gitSyncError, setGitSyncError] = useState<string | null>(null);
+
+  // Primary function for pushing all layout items to GitHub
+  const syncLayoutToGitHub = async (customMessage?: string | null) => {
+    // If not connected, we can't sync
+    const savedRepoRaw = localStorage.getItem('chakra_github_repo');
+    let activeRepo = githubRepo;
+    if (!activeRepo && savedRepoRaw && savedRepoRaw !== 'null') {
+      try { activeRepo = JSON.parse(savedRepoRaw); } catch (_) {}
+    }
+    
+    if (!activeRepo || !activeRepo.connected) return;
+
+    setGitIsSyncing(true);
+    setGitSyncError(null);
+
+    try {
+      // Fetch currently added map elements from local storage
+      const rawMarkers = localStorage.getItem('chakra_event_layout_markers_v4');
+      const rawCategories = localStorage.getItem('chakra_event_custom_categories_v4');
+
+      let markers = [];
+      let customCategories = [];
+
+      if (rawMarkers) {
+        try { markers = JSON.parse(rawMarkers); } catch (_) {}
+      }
+      if (rawCategories) {
+        try { customCategories = JSON.parse(rawCategories); } catch (_) {}
+      }
+
+      const response = await fetch("/api/github/sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          owner: activeRepo.owner,
+          repoName: activeRepo.repoName,
+          branch: activeRepo.branch,
+          markers,
+          customCategories,
+          commitMessage: customMessage || `Sync ${markers.length} live map anchors & operational resources`
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setGitLastSynced(result.timestamp);
+        localStorage.setItem('chakra_github_last_synced', result.timestamp);
+        setGitCommits(result.commits || []);
+      } else {
+        setGitSyncError(result.error || "GitHub sync failed.");
+      }
+    } catch (e: any) {
+      setGitSyncError(e.message || "Failed to sync to GitHub.");
+    } finally {
+      setGitIsSyncing(false);
+    }
+  };
+
+  // Synchronize on startup and setup custom event listeners
+  useEffect(() => {
+    const fetchInitialGitData = async () => {
+      try {
+        const response = await fetch("/api/github/data");
+        const json = await response.json();
+        if (json.success) {
+          if (json.commits && json.commits.length > 0) {
+            setGitCommits(json.commits);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load initial git history", e);
+      }
+    };
+    fetchInitialGitData();
+  }, []);
+
+  // Listen to changes in map layouts and upload silently
+  useEffect(() => {
+    const handleMapDataChange = () => {
+      syncLayoutToGitHub();
+    };
+
+    window.addEventListener('chakra_map_data_changed', handleMapDataChange);
+    return () => {
+      window.removeEventListener('chakra_map_data_changed', handleMapDataChange);
+    };
+  }, [githubRepo]);
+
   const handleDisconnectGithub = () => {
     setGithubRepo(null);
     localStorage.setItem('chakra_github_repo', 'null');
+    setGitCommits([]);
+    setGitLastSynced(null);
+    localStorage.removeItem('chakra_github_last_synced');
   };
 
-  const handleConnectGithub = (owner: string, name: string, branch: string) => {
+  const handleConnectGithub = async (owner: string, name: string, branch: string) => {
     const newRepo = {
       owner: owner.trim() || 'anjanaiz',
       repoName: name.trim() || 'Chakra',
@@ -106,6 +207,11 @@ export default function App() {
     setGithubRepo(newRepo);
     localStorage.setItem('chakra_github_repo', JSON.stringify(newRepo));
     setIsConfiguringRepo(false);
+    
+    // Auto sync on connection to save all current data right away
+    setTimeout(() => {
+      syncLayoutToGitHub("init: establish repository connection & seed map elements");
+    }, 100);
   };
 
   // Read current date from metadata config / prompt
@@ -592,16 +698,96 @@ export default function App() {
                 </div>
 
                 {githubRepo && githubRepo.connected && !isConfiguringRepo ? (
-                  <div className="space-y-2">
-                    <div className="bg-black/20 p-2.5 rounded-lg border border-white/5">
+                  <div className="space-y-3">
+                    <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 space-y-1.5">
                       <div className="text-[11px] font-bold text-white font-display truncate">
                         {githubRepo.owner}/{githubRepo.repoName}
                       </div>
-                      <div className="text-[8px] text-white/40 font-mono mt-1 flex items-center gap-1">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/10" /> branch: <span className="text-white/60">{githubRepo.branch}</span>
+                      <div className="flex items-center justify-between text-[8px] text-white/40 font-mono">
+                        <span className="flex items-center gap-1">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#FF6B00]" /> branch: <span className="text-white/60">{githubRepo.branch}</span>
+                        </span>
+                        <span className="text-[7.5px] uppercase tracking-wider px-1 bg-white/5 rounded text-white/50">GitHub Live Sync</span>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+
+                    {/* LAST SYNCED TIMESTAMP DISPLAY */}
+                    <div className="space-y-1" id="last-synced-container">
+                      <label className="text-[7.5px] text-white/30 uppercase font-mono tracking-wider">Sync Status</label>
+                      {gitLastSynced ? (
+                        <div className="flex items-center gap-1.5 text-[9px] bg-emerald-500/5 border border-emerald-500/10 px-2 py-1.5 rounded-lg">
+                          <CheckCircle size={10} className="text-emerald-400 shrink-0" />
+                          <div className="leading-tight flex-1">
+                            <span className="text-[7.5px] text-emerald-400/80 block uppercase font-mono tracking-wider font-semibold">Synchronization Active</span>
+                            <span className="font-mono text-zinc-300 font-medium text-[9px]">{gitLastSynced}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-[9px] bg-[#FF6B00]/5 border border-[#FF6B00]/10 px-2 py-1.5 rounded-lg">
+                          <Info size={10} className="text-[#FF6B00] shrink-0 animate-pulse" />
+                          <div className="leading-tight flex-1">
+                            <span className="text-[7.5px] text-[#FF6B00]/80 block uppercase font-mono tracking-wider font-semibold">Pending Initial Push</span>
+                            <span className="font-mono text-zinc-400 text-[8.5px]">Seeding workspace directory...</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* RECENT ACTIVITY / RECENT COMMITS TIMELINE DISPLAY */}
+                    <div className="space-y-1">
+                      <label className="text-[7.5px] text-white/30 uppercase font-mono tracking-wider flex items-center gap-1">
+                        <History size={7.5} /> Recent Workspace Commits
+                      </label>
+                      {gitCommits && gitCommits.length > 0 ? (
+                        <div className="space-y-1 max-h-[140px] overflow-y-auto pr-1 select-none custom-scrollbar pb-1">
+                          {gitCommits.slice(0, 3).map((commit: any, idx: number) => (
+                            <div key={idx} className="bg-black/35 border border-white/5 rounded-md p-1.5 font-mono text-[8.2px] leading-normal transition hover:border-white/10">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[#FF6B00] font-bold">git commit #{commit.hash}</span>
+                                <span className="text-[7.5px] text-white/30">{commit.timestamp.split(', ')[1] || commit.timestamp}</span>
+                              </div>
+                              <p className="text-zinc-400 mt-0.5 line-clamp-1">{commit.message}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-[8px] font-mono text-white/20 italic py-1 bg-black/10 rounded-md text-center border border-white/5">
+                          No recent pushes. Trigger manual sync below.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* MANUAL TRIGGER SYNC BUTTON */}
+                    <button
+                      onClick={() => syncLayoutToGitHub()}
+                      disabled={gitIsSyncing}
+                      className={`w-full flex items-center justify-center gap-2 py-1.5 border rounded-lg text-[9px] font-mono font-bold transition uppercase tracking-wider cursor-pointer ${
+                        gitIsSyncing 
+                        ? "bg-zinc-800 text-zinc-400 border-zinc-700 pointer-events-none" 
+                        : "bg-[#FF6B00]/10 hover:bg-[#FF6B00]/25 border-[#FF6B00]/25 text-[#FF6B00]"
+                      }`}
+                      id="manual-sync-github-btn"
+                    >
+                      {gitIsSyncing ? (
+                        <>
+                          <RefreshCw size={10} className="animate-spin" />
+                          Pushing Map Layout...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw size={10} />
+                          Manual Push Sync
+                        </>
+                      )}
+                    </button>
+
+                    {gitSyncError && (
+                      <div className="text-[8px] font-mono text-red-400 bg-red-500/5 px-2 py-1 border border-red-500/10 rounded">
+                        Error: {gitSyncError}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 pt-1">
                       <button
                         onClick={() => {
                           setRepoOwnerInput(githubRepo.owner);
