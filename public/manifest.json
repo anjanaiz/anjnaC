@@ -1,0 +1,20 @@
+{
+  "short_name": "Chakra 360",
+  "name": "Chakra 360 Live Event Production Dashboard",
+  "icons": [
+    {
+      "src": "/chakra_logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/chakra_logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0A0A0A",
+  "theme_color": "#FF6B00",
+  "display": "standalone"
+}

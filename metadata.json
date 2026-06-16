@@ -1,0 +1,6 @@
+{
+  "name": "Chakra 360 Live Event Production Dashboard",
+  "description": "A dark event production tracking and timeline dashboard designed for CHAKRA 360 LIVE IN CONCERT featuring asset tracking, content category progress, status updates, and interactive day-by-day scheduling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "Category": {
+      "title": "Category",
+      "description": "A shoot list category document detailing video items and statuses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "items": { "type": "array" },
+        "isCustom": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "items"]
+    },
+    "TimelineDay": {
+      "title": "TimelineDay",
+      "description": "A production timeline day detailing status and scheduled tasks",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string" },
+        "tasks": { "type": "array" },
+        "isEventDay": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["date", "status", "tasks"]
+    }
+  },
+  "firestore": {
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Collection of shoot list video item categories"
+    },
+    "/timeline/{dayId}": {
+      "schema": "TimelineDay",
+      "description": "Collection of timeline schedule days"
+    }
+  }
+}
