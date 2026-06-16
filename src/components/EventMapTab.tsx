@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import savedMarkers from '../github-repo/markers.json';
+import savedCategories from '../github-repo/custom_categories.json';
 import { 
   Sparkles, 
   Sliders, 
@@ -201,26 +203,49 @@ export const EventMapTab: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as MapMarker[];
-        return parsed.map(m => {
-          if (!m.resources || m.resources.length === 0) {
-            return {
-              ...m,
-              resources: [
-                { id: 'res_df_cnp_' + m.id, name: 'Canopy 10x10', quantity: 1 },
-                { id: 'res_df_tbl_' + m.id, name: 'Table', quantity: 1 },
-                { id: 'res_df_chr_' + m.id, name: 'Chairs', quantity: 2 },
-                { id: 'res_df_led_' + m.id, name: 'LED Bulb', quantity: 1 },
-                { id: 'res_df_s13_' + m.id, name: '13A Power Socket', quantity: 1 },
-                { id: 'res_df_s15_' + m.id, name: '15A Power Socket', quantity: 1 }
-              ]
-            };
-          }
-          return m;
-        });
+        if (parsed && parsed.length > 0) {
+          return parsed.map(m => {
+            if (!m.resources || m.resources.length === 0) {
+              return {
+                ...m,
+                resources: [
+                  { id: 'res_df_cnp_' + m.id, name: 'Canopy 10x10', quantity: 1 },
+                  { id: 'res_df_tbl_' + m.id, name: 'Table', quantity: 1 },
+                  { id: 'res_df_chr_' + m.id, name: 'Chairs', quantity: 2 },
+                  { id: 'res_df_led_' + m.id, name: 'LED Bulb', quantity: 1 },
+                  { id: 'res_df_s13_' + m.id, name: '13A Power Socket', quantity: 1 },
+                  { id: 'res_df_s15_' + m.id, name: '15A Power Socket', quantity: 1 }
+                ]
+              };
+            }
+            return m;
+          });
+        }
       } catch (_) {
         // Fallback
       }
     }
+    
+    // Check if there are statically synced elements from the active GitHub repo
+    if (savedMarkers && savedMarkers.length > 0) {
+      return (savedMarkers as MapMarker[]).map(m => {
+        if (!m.resources || m.resources.length === 0) {
+          return {
+            ...m,
+            resources: [
+              { id: 'res_df_cnp_' + m.id, name: 'Canopy 10x10', quantity: 1 },
+              { id: 'res_df_tbl_' + m.id, name: 'Table', quantity: 1 },
+              { id: 'res_df_chr_' + m.id, name: 'Chairs', quantity: 2 },
+              { id: 'res_df_led_' + m.id, name: 'LED Bulb', quantity: 1 },
+              { id: 'res_df_s13_' + m.id, name: '13A Power Socket', quantity: 1 },
+              { id: 'res_df_s15_' + m.id, name: '15A Power Socket', quantity: 1 }
+            ]
+          };
+        }
+        return m;
+      });
+    }
+
     return INITIAL_MARKERS.map(m => {
       const defaultRes = [
         { id: 'res_df_cnp_' + m.id, name: 'Canopy 10x10', quantity: 1 },
@@ -252,10 +277,15 @@ export const EventMapTab: React.FC = () => {
     const saved = localStorage.getItem('chakra_event_custom_categories_v4');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.length > 0) return parsed;
       } catch (_) {
-        return [];
+        // Fallback
       }
+    }
+    // Check if there are statically synced custom categories from the active GitHub repo
+    if (savedCategories && savedCategories.length > 0) {
+      return savedCategories as string[];
     }
     return [];
   });
