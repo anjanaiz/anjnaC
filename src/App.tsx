@@ -35,7 +35,6 @@ import {
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType } from './firebase';
 import { TaskPlannerTab } from './components/TaskPlannerTab';
-import chakraLogo from './assets/images/chakra_logo_transparent.png';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'shoot' | 'timeline' | 'map' | 'requirements' | 'tasks'>('shoot');
@@ -473,18 +472,16 @@ export default function App() {
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#FF6B00]/[0.01] rounded-full blur-[150px] pointer-events-none z-0" />
 
       {/* DESKTOP SIDEBAR (Bento Style Left Rail) */}
-      <aside className="hidden md:flex w-68 bg-[#0C0C0C]/90 border-r border-white/5 flex-col p-6 justify-between h-full shrink-0 z-20 relative backdrop-blur-md" id="desktop-sidebar">
+      <aside className="hidden md:flex w-68 bg-[#0C0C0C] border-r border-white/5 flex-col p-6 justify-between h-full shrink-0 z-20 relative backdrop-blur-md" id="desktop-sidebar">
         {/* Sidebar Header / Logo */}
         <div className="space-y-8 flex-1 flex flex-col">
           <div className="flex items-center gap-3.5">
-            <div className="h-11 w-11 flex items-center justify-center shrink-0">
-              <img 
-                src={chakraLogo} 
-                alt="Chakra 360 Logo" 
-                className="h-full w-full object-contain filter drop-shadow-[0_2px_12px_rgba(255,107,0,0.35)]"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+            <img 
+              src="/chakra_logo.png" 
+              alt="Chakra 360 Logo" 
+              className="h-11 w-11 object-contain select-none shrink-0 filter drop-shadow-[0_0_12px_rgba(255,107,0,0.5)]" 
+              referrerPolicy="no-referrer"
+            />
             <div>
               <h1 className="font-display font-extrabold text-[#FF6B00] tracking-wider text-base leading-none">
                 CHAKRA 360
@@ -513,7 +510,7 @@ export default function App() {
             >
               <div className="flex items-center gap-3">
                 <Film size={14} className={activeTab === 'shoot' ? 'text-[#FF6B00]' : 'text-white/40'} />
-                <span>Shoot List & Status</span>
+                <span>SHOOT LIST & STATUS</span>
               </div>
               <div className={`w-1.5 h-1.5 rounded-full ${
                 activeTab === 'shoot' 
@@ -532,7 +529,7 @@ export default function App() {
             >
               <div className="flex items-center gap-3">
                 <Calendar size={14} className={activeTab === 'timeline' ? 'text-[#FF6B00]' : 'text-white/40'} />
-                <span>Production Timeline</span>
+                <span>PRODUCTION TIMELINE</span>
               </div>
               <div className={`w-1.5 h-1.5 rounded-full ${
                 activeTab === 'timeline' 
@@ -589,7 +586,7 @@ export default function App() {
             >
               <div className="flex items-center gap-3">
                 <ListTodo size={14} className={activeTab === 'tasks' ? 'text-[#FF6B00]' : 'text-white/40'} />
-                <span>Task Planner</span>
+                <span>TASK PLANNER</span>
               </div>
               <div className={`w-1.5 h-1.5 rounded-full ${
                 activeTab === 'tasks' 
@@ -904,14 +901,12 @@ export default function App() {
       {/* MOBILE STICKY STAGED NAV HEADER */}
       <header className="md:hidden sticky top-0 z-50 bg-[#0C0C0C]/95 border-b border-white/5 backdrop-blur-md flex items-center justify-between p-4 px-6" id="global-header">
         <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 flex items-center justify-center shrink-0">
-            <img 
-              src={chakraLogo} 
-              alt="Chakra 360 Logo" 
-              className="h-full w-full object-contain filter drop-shadow-[0_2px_10px_rgba(255,107,0,0.3)]"
-              referrerPolicy="no-referrer"
-            />
-          </div>
+          <img 
+            src="/chakra_logo.png" 
+            alt="Chakra 360 Logo" 
+            className="h-9 w-9 object-contain select-none shrink-0 filter drop-shadow-[0_0_10px_rgba(255,107,0,0.4)]" 
+            referrerPolicy="no-referrer"
+          />
           <div>
             <span className="font-display font-extrabold text-[#FF6B00] tracking-wider text-xs">
               CHAKRA 360
@@ -963,7 +958,7 @@ export default function App() {
                   activeTab === 'shoot' ? 'bg-[#FF6B00] text-black font-black' : 'bg-white/5 text-white/70'
                 }`}
               >
-                P01: Shoots
+                P01: SHOOT LIST & STATUS
               </button>
               <button
                 onClick={() => {
@@ -974,7 +969,7 @@ export default function App() {
                   activeTab === 'timeline' ? 'bg-[#FF6B00] text-black font-black' : 'bg-white/5 text-white/70'
                 }`}
               >
-                P02: Timeline
+                P02: PRODUCTION TIMELINE
               </button>
               <button
                 onClick={() => {
@@ -996,7 +991,7 @@ export default function App() {
                   activeTab === 'requirements' ? 'bg-[#FF6B00] text-black font-black' : 'bg-white/5 text-white/70'
                 }`}
               >
-                REQUIREMENTS
+                EVENT REQUIREMENTS
               </button>
               <button
                 onClick={() => {
@@ -1062,14 +1057,14 @@ export default function App() {
             </div>
             <h2 className="text-lg font-bold font-display tracking-tight text-white mt-0.5">
               {activeTab === 'shoot' 
-                ? 'PAGE 01 — SHOOT LIST & STATUS' 
+                ? 'SHOOT LIST & STATUS' 
                 : activeTab === 'timeline' 
-                  ? 'PAGE 02 — PRODUCTION TIMELINE SEQUENCE'
+                  ? 'PRODUCTION TIMELINE SEQUENCE'
                   : activeTab === 'map'
                     ? 'EVENT MAP'
                     : activeTab === 'requirements'
-                      ? 'PAGE 04 — EVENT REQUIREMENTS'
-                      : 'PAGE 05 — GENERAL TASK PLANNER'}
+                      ? 'EVENT REQUIREMENTS'
+                      : 'GENERAL TASK PLANNER'}
             </h2>
           </div>
 
@@ -1083,22 +1078,6 @@ export default function App() {
         {/* INNER SCROLLABLE STAGE CONTAINER */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto pb-24" id="stage-viewport">
           
-          {/* INTRO ANNOUNCEMENT GLASS BANNER */}
-          <div className="bg-white/5 p-5 rounded-3xl border border-white/10 backdrop-blur-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4" id="intro-banner">
-            <div className="flex items-start gap-3.5">
-              <div className="p-2.5 bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[#FF6B00] rounded-xl">
-                <Sparkles size={18} />
-              </div>
-              <div>
-                <h3 className="text-white font-display font-bold text-sm">
-                  CHAKRA 360 LIVE — Production Environment Active
-                </h3>
-                <p className="text-zinc-500 text-xs mt-0.5 max-w-2xl leading-relaxed">
-                  Welcome to the official live concert workspace. Manage artist teasers, tracking statuses, campaign reactions, and modify the critical sequence starting June 12 to Concert Day. Each element automatically coordinates downstream stats.
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* DYNAMIC GRID METRICS (REACTIVE WIDGETS) */}
           {activeTab !== 'map' && activeTab !== 'requirements' && activeTab !== 'tasks' && (

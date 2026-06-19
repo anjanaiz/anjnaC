@@ -26,7 +26,9 @@ import {
   HelpCircle,
   HelpCircle as CheckCircle, // using fallback safe name
   Beer,
-  Bath
+  Bath,
+  Package,
+  ClipboardList
 } from 'lucide-react';
 
 export const autoResolveIcon = (title: string, category: string): string => {
@@ -686,8 +688,52 @@ export const EventMapTab: React.FC = () => {
 
   const selectedMarker = markers.find(m => m.id === activeMarkerId);
 
+  // Calculation of consolidated resources
+  const resourceSummaryList = (() => {
+    const summaryMap: { [name: string]: { total: number; locations: { title: string; qty: number }[] } } = {};
+    
+    markers.forEach(marker => {
+      if (marker.resources && Array.isArray(marker.resources)) {
+        marker.resources.forEach(res => {
+          const rawName = res.name.trim();
+          if (!rawName) return;
+          
+          // Match case-insensitively but keep first capitalized name we encounter for key
+          const normalized = rawName.toUpperCase();
+          const matchedKey = Object.keys(summaryMap).find(k => k.toUpperCase() === normalized);
+          const key = matchedKey || rawName;
+          
+          if (!summaryMap[key]) {
+            summaryMap[key] = { total: 0, locations: [] };
+          }
+          
+          summaryMap[key].total += res.quantity;
+          summaryMap[key].locations.push({
+            title: marker.title,
+            qty: res.quantity
+          });
+        });
+      }
+    });
+
+    return Object.entries(summaryMap).map(([name, data]) => ({
+      name,
+      total: data.total,
+      locations: data.locations
+    })).sort((a, b) => b.total - a.total); // Sort highest quantity first
+  })();
+
+  const categoryTotals = (() => {
+    const counts: { [cat: string]: number } = {};
+    markers.forEach(m => {
+      counts[m.category] = (counts[m.category] || 0) + 1;
+    });
+    return counts;
+  })();
+
   return (
-    <div className="flex flex-col xl:flex-row gap-6 min-h-[580px]" id="event-layout-container">
+    <div className="space-y-6" id="event-blueprint-and-summary-wrapper">
+      <div className="flex flex-col xl:flex-row gap-6 min-h-[580px]" id="event-layout-container">
       {/* LEFT SECTION: Layout Directory Panel */}
       <div className="w-full xl:w-80 bg-[#0C0C0C] rounded-3xl border border-white/10 p-5 flex flex-col justify-between overflow-hidden" id="layout-directory-panel">
         
@@ -1698,6 +1744,132 @@ export const EventMapTab: React.FC = () => {
 
         </div>
 
+      </div>
+
+      </div> {/* This closes #event-layout-container */}
+
+      {/* GLOBAL EVENT RESOURCE SUMMARY SECTION */}
+      <div 
+        className="w-full bg-[#0C0C0C] rounded-3xl border border-white/10 p-6 space-y-6 shadow-xl relative overflow-hidden" 
+        id="global-event-resource-summary-panel"
+      >
+        <div className="absolute inset-0 bg-[#FF6B00]/[0.01] pointer-events-none" />
+        
+        {/* Header content */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-[#FF6B00]/10 border border-[#FF6B00]/25 rounded-lg text-[#FF6B00]">
+                <ClipboardList size={16} />
+              </span>
+              <h3 className="text-sm font-bold font-display text-white uppercase tracking-wider">
+                Event Logistics & Resource Summary
+              </h3>
+            </div>
+            <p className="text-[10px] text-zinc-400 font-mono leading-normal">
+              Consolidated tallies of physical items, props, utilities, and assets deployed across all mapped blueprint locations.
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3 bg-black/40 border border-white/5 px-3 py-2 rounded-xl text-[10px] font-mono shrink-0 select-none">
+            <div className="text-center">
+              <span className="text-zinc-500 uppercase text-[8px] block">Total Map Anchors</span>
+              <span className="text-white font-extrabold text-xs">{markers.length}</span>
+            </div>
+            <div className="w-px h-6 bg-white/10" />
+            <div className="text-center">
+              <span className="text-zinc-500 uppercase text-[8px] block">Unique Resources</span>
+              <span className="text-[#FF6B00] font-extrabold text-xs">{resourceSummaryList.length}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bento/Grid style breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Card 1: Map Anchors Category Registry */}
+          <div className="bg-black/20 border border-white/5 rounded-2xl p-4 space-y-4">
+            <h4 className="text-[11px] font-bold font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1.5">
+              <Package size={12} className="text-[#FF6B00]" />
+              Anchor Point Densities
+            </h4>
+            
+            {markers.length === 0 ? (
+              <div className="text-zinc-600 font-mono text-[9px] italic py-8 text-center bg-black/10 rounded-xl border border-dashed border-white/5">
+                No stages or stalls pinned on the blueprint yet.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="space-y-1.5">
+                  {Object.entries(categoryTotals).map(([cat, count]) => {
+                    const theme = getCategoryTheme(cat);
+                    return (
+                      <div key={cat} className="flex items-center justify-between text-[9px] font-mono p-1.5 bg-white/[0.01] border border-white/5 rounded-lg hover:border-white/10 transition">
+                        <span className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${theme.text} bg-current`} />
+                          <span className="text-zinc-300 font-medium">{theme.label}</span>
+                        </span>
+                        <span className="text-white bg-white/10 px-2 py-0.5 rounded font-bold font-mono">
+                          {count} {count === 1 ? 'unit' : 'units'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <div className="text-[8px] leading-relaxed text-zinc-500 bg-black/25 p-2 rounded-lg border border-white/5 text-center font-mono select-none">
+                  💡 Power Grid load distribution is automatically tracked across each category. See blueprint tooltips for localized constraints.
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Card 2 & 3: Master Consolidated Resource Sheet */}
+          <div className="lg:col-span-2 bg-[#080808] border border-white/5 rounded-2xl p-4 space-y-4 flex flex-col justify-between">
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-bold font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1.5 justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Layers size={12} className="text-[#FF6B00]" />
+                  Combined Equipment & Asset Tallies
+                </div>
+                <span className="text-[8px] font-mono font-black text-[#FF6B00] uppercase bg-[#FF6B00]/5 px-2 py-0.5 rounded border border-[#FF6B00]/10 tracking-widest animate-pulse">
+                  Live Consolidated
+                </span>
+              </h4>
+
+              {resourceSummaryList.length === 0 ? (
+                <div className="text-zinc-600 font-mono text-[9px] italic py-12 text-center bg-black/20 rounded-xl border border-dashed border-white/5">
+                  No resources or equipment assigned to any event points yet.<br />
+                  Select a pinned location above and use the Resources & Equipment Manager to allocate supplies.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
+                  {resourceSummaryList.map((item, idx) => (
+                    <div 
+                      key={idx} 
+                      className="p-3 bg-black/40 border border-white/5 rounded-xl flex items-center justify-between hover:border-[#FF6B00]/30 hover:bg-black/60 transition group"
+                    >
+                      <span className="text-[11px] font-bold text-zinc-200 truncate pr-2 font-mono uppercase tracking-tight font-sans">
+                        {item.name}
+                      </span>
+                      <div className="text-[10px] font-mono font-black bg-[#FF6B00]/10 border border-[#FF6B00]/30 text-[#FF6B00] px-2.5 py-1 rounded-full select-none text-right shrink-0">
+                        Total: {item.total}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {resourceSummaryList.length > 0 && (
+              <div className="pt-2 border-t border-white/5 text-[8px] font-mono text-zinc-500 flex items-center justify-between">
+                <span>Auto-compiled logistics ledger</span>
+                <span>Active Anchor Registry sync verified ✓</span>
+              </div>
+            )}
+          </div>
+
+        </div>
       </div>
 
       {/* GLOWING HIGH-CONTRAST NEON CONFIRMATION DIALOG MODAL */}

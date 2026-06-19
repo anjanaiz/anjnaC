@@ -1,7 +1,10 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { 
-  getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  setLogLevel,
   doc, 
   getDocFromServer, 
   collection, 
@@ -31,9 +34,16 @@ interface FirebaseConfigExtended {
 
 const typedConfig = firebaseConfig as FirebaseConfigExtended;
 
+// Set Firestore log level to error to ignore benign connection warnings when offline/sandboxed
+setLogLevel('error');
+
 export const db = typedConfig.firestoreDatabaseId
-  ? getFirestore(app, typedConfig.firestoreDatabaseId)
-  : getFirestore(app);
+  ? initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    }, typedConfig.firestoreDatabaseId)
+  : initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
 
 // Initialize Authentication
 export const auth = getAuth(app);
@@ -98,13 +108,20 @@ async function testConnection() {
     const testDocRef = doc(db, 'test_connection', 'ping');
     await getDocFromServer(testDocRef);
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      // Avoid printing to console.error during non-interactive, automated headless checks
+    const isOffline = error instanceof Error && (
+      error.message.includes('offline') || 
+      error.message.includes('unavailable') ||
+      (error as any).code === 'unavailable'
+    );
+    if (isOffline) {
+      // Avoid printing to console.error during non-interactive, automated headless checks or safe offline operations
       if (typeof window !== 'undefined' && !window.navigator.userAgent.includes('Headless')) {
-        console.error("Please check your Firebase configuration.");
+        console.warn("Firestore backend is currently unreachable; operating seamlessly in offline persistent cache mode.");
       } else {
         console.log("Firebase connection test bypassed or offline during build precheck.");
       }
+    } else {
+      console.warn("Firestore initialization status:", error instanceof Error ? error.message : error);
     }
   }
 }

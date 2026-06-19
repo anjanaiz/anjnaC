@@ -657,13 +657,12 @@ export const EventRequirementsTab: React.FC = () => {
                 <th className="py-3 px-4">Requirement Item</th>
                 <th className="py-3 px-4 text-center">Total Quantity</th>
                 <th className="py-3 px-4">Allocated Pools & Volumes Breakdown</th>
-                <th className="py-3 px-4">Aesthetic & Logistic Specifications Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 bg-black/20">
               {consolidatedList.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-10 text-xs text-white/30 italic">
+                  <td colSpan={3} className="text-center py-10 text-xs text-white/30 italic">
                     {categories.every(c => c.items.length === 0) 
                       ? 'No items currently in the requirement list. Add items inside any pool container to initialize.' 
                       : 'No matches found. Adjust search filter query above.'}
@@ -691,20 +690,6 @@ export const EventRequirementsTab: React.FC = () => {
                             {c.name}: <strong className="text-white">{c.qty}</strong>
                           </span>
                         ))}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-[10px] text-zinc-400 leading-relaxed italic max-w-sm">
-                      <div className="space-y-0.5">
-                        {item.categories
-                          .filter(c => c.notes)
-                          .map((c, cIdx) => (
-                            <div key={cIdx} className="truncate">
-                              <span className="text-[#FF6B00] font-bold not-italic">[{c.name}]</span> {c.notes}
-                            </div>
-                          ))}
-                        {item.categories.every(c => !c.notes) && (
-                          <span className="text-zinc-600">No specifications declared yet for resources.</span>
-                        )}
                       </div>
                     </td>
                   </tr>
