@@ -71,8 +71,12 @@ export function TaskPlannerTab() {
         // fallback
       }
     }
-    return DEFAULT_TASKS;
+    return [];
   });
+
+  useEffect(() => {
+    localStorage.setItem('chakra_general_tasks', JSON.stringify(tasks));
+  }, [tasks]);
 
   const [selectedDate, setSelectedDate] = useState<string>('2026-06-16'); // default to 16 June 2026
   const [newTaskText, setNewTaskText] = useState<string>('');
@@ -95,51 +99,25 @@ export function TaskPlannerTab() {
     return () => unsubscribeAuth();
   }, []);
 
-  // Sync to local storage when not logged in
+  // Sync with Firestore in real-time unconditionally (both for guest and logged-in users)
   useEffect(() => {
-    if (!user) {
-      localStorage.setItem('chakra_general_tasks', JSON.stringify(tasks));
-    }
-  }, [tasks, user]);
-
-  // Sync with Firestore in real-time when authenticated
-  useEffect(() => {
-    if (!user) return;
-
     const path = 'general_tasks';
     const unsubscribeSnapshot = onSnapshot(collection(db, path), (snapshot) => {
       const list: GeneralTask[] = [];
       snapshot.forEach((doc) => {
         list.push(doc.data() as GeneralTask);
       });
-      if (list.length > 0) {
-        // sort by createdAt
-        list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-        setTasks(list);
-      }
+      list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      setTasks(list);
+      localStorage.setItem('chakra_general_tasks', JSON.stringify(list));
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, path);
+      console.error("Firestore general_tasks snapshot error:", error);
     });
 
-    // Seed database if empty
-    const seedTasksIfEmpty = async () => {
-      try {
-        const snap = await getDocs(collection(db, path));
-        if (snap.empty) {
-          for (const task of DEFAULT_TASKS) {
-            await setDoc(doc(db, path, task.id), task);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to seed general_tasks: ", err);
-      }
-    };
-    seedTasksIfEmpty();
-
     return () => unsubscribeSnapshot();
-  }, [user]);
+  }, []);
 
-  // Operations wrapped with Firestore writes when authenticated
+  // Operations wrapped with Firestore writes unconditionally
   const handleAddTask = async (text: string, date: string) => {
     if (!text.trim()) return;
 
@@ -155,13 +133,11 @@ export function TaskPlannerTab() {
     setTasks(updatedTasks);
     setNewTaskText('');
 
-    if (user) {
-      try {
-        const path = 'general_tasks';
-        await setDoc(doc(db, path, newTask.id), newTask);
-      } catch (error) {
-        handleFirestoreError(error, OperationType.WRITE, `general_tasks/${newTask.id}`);
-      }
+    try {
+      const path = 'general_tasks';
+      await setDoc(doc(db, path, newTask.id), newTask);
+    } catch (error) {
+      console.error("Failed to add task to Firestore:", error);
     }
   };
 
@@ -169,16 +145,14 @@ export function TaskPlannerTab() {
     const updated = tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t);
     setTasks(updated);
 
-    if (user) {
-      try {
-        const target = updated.find(t => t.id === taskId);
-        if (target) {
-          const path = 'general_tasks';
-          await setDoc(doc(db, path, taskId), target);
-        }
-      } catch (error) {
-        handleFirestoreError(error, OperationType.WRITE, `general_tasks/${taskId}`);
+    try {
+      const target = updated.find(t => t.id === taskId);
+      if (target) {
+        const path = 'general_tasks';
+        await setDoc(doc(db, path, taskId), target);
       }
+    } catch (error) {
+      console.error("Failed to toggle task in Firestore:", error);
     }
   };
 
@@ -193,16 +167,14 @@ export function TaskPlannerTab() {
     setTasks(updated);
     setEditingTaskId(null);
 
-    if (user) {
-      try {
-        const target = updated.find(t => t.id === taskId);
-        if (target) {
-          const path = 'general_tasks';
-          await setDoc(doc(db, path, taskId), target);
-        }
-      } catch (error) {
-        handleFirestoreError(error, OperationType.WRITE, `general_tasks/${taskId}`);
+    try {
+      const target = updated.find(t => t.id === taskId);
+      if (target) {
+        const path = 'general_tasks';
+        await setDoc(doc(db, path, taskId), target);
       }
+    } catch (error) {
+      console.error("Failed to edit task in Firestore:", error);
     }
   };
 
@@ -210,13 +182,11 @@ export function TaskPlannerTab() {
     const updated = tasks.filter(t => t.id !== taskId);
     setTasks(updated);
 
-    if (user) {
-      try {
-        const path = 'general_tasks';
-        await deleteDoc(doc(db, path, taskId));
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `general_tasks/${taskId}`);
-      }
+    try {
+      const path = 'general_tasks';
+      await deleteDoc(doc(db, path, taskId));
+    } catch (error) {
+      console.error("Failed to delete task from Firestore:", error);
     }
   };
 

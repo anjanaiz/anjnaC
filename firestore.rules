@@ -1,76 +1,34 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. Global safety net default-deny catch-all
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Reusable global security helpers
-    function isSignedIn() {
-      return request.auth != null;
-    }
+    // Shared Event Dashboard: Allow real-time synchronization across all devices and browsers
     
-    function isVerifiedEmail() {
-      return isSignedIn() && request.auth.token.email_verified == true;
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    // Entity validation schemas
-    function isValidCategory(data) {
-      return data.keys().hasAll(['id', 'name', 'items'])
-        && data.id is string
-        && data.id.size() <= 100
-        && data.name is string
-        && data.name.size() <= 120
-        && data.items is list
-        && data.items.size() <= 100;
-    }
-
-    function isValidTimelineDay(data) {
-      return data.keys().hasAll(['date', 'status', 'tasks'])
-        && data.date is string
-        && data.date.size() <= 30
-        && data.status is string
-        && data.status.size() <= 30
-        && data.tasks is list
-        && data.tasks.size() <= 50;
-    }
-
-    function isValidGeneralTask(data) {
-      return data.keys().hasAll(['id', 'text', 'completed', 'date'])
-        && data.id is string
-        && data.id.size() <= 100
-        && data.text is string
-        && data.text.size() <= 1000
-        && data.completed is bool
-        && data.date is string
-        && data.date.size() <= 30;
-    }
-
-    // Collections matches
     match /categories/{categoryId} {
-      allow read: if isSignedIn();
-      allow create: if isVerifiedEmail() && isValidId(categoryId) && isValidCategory(request.resource.data);
-      allow update: if isVerifiedEmail() && isValidId(categoryId) && isValidCategory(request.resource.data);
-      allow delete: if isVerifiedEmail() && isValidId(categoryId);
+      allow read, write: if true;
     }
 
     match /timeline/{dayId} {
-      allow read: if isSignedIn();
-      allow create: if isVerifiedEmail() && isValidId(dayId) && isValidTimelineDay(request.resource.data);
-      allow update: if isVerifiedEmail() && isValidId(dayId) && isValidTimelineDay(request.resource.data);
-      allow delete: if isVerifiedEmail() && isValidId(dayId);
+      allow read, write: if true;
     }
 
     match /general_tasks/{taskId} {
-      allow read: if isSignedIn();
-      allow create: if isVerifiedEmail() && isValidId(taskId) && isValidGeneralTask(request.resource.data);
-      allow update: if isVerifiedEmail() && isValidId(taskId) && isValidGeneralTask(request.resource.data);
-      allow delete: if isVerifiedEmail() && isValidId(taskId);
+      allow read, write: if true;
+    }
+
+    match /map_markers/{markerId} {
+      allow read, write: if true;
+    }
+
+    match /map_categories/{catId} {
+      allow read, write: if true;
+    }
+
+    match /event_requirements/{reqId} {
+      allow read, write: if true;
+    }
+
+    match /settings/{settingsId} {
+      allow read, write: if true;
     }
   }
 }

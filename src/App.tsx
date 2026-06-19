@@ -35,7 +35,7 @@ import {
   Upload
 } from 'lucide-react';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
-import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType } from './firebase';
+import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType, checkDbOnline } from './firebase';
 import { TaskPlannerTab } from './components/TaskPlannerTab';
 import { chakraLogoBase64 as chakraLogo } from './assets/images/logoBase64';
 
@@ -48,173 +48,28 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'offline' | 'loading' | 'synced' | 'error'>('offline');
 
-  // GitHub Repository Sync State
-  const [githubRepo, setGithubRepo] = useState<{
-    owner: string;
-    repoName: string;
-    branch: string;
-    connected: boolean;
-  } | null>(() => {
-    const saved = localStorage.getItem('chakra_github_repo');
-    if (saved === 'null') return null;
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') {
-          // Sync to GitHub anjanaiz/anjnaC, not anjanaiz/Chakra. Move existing 'Chakra' configurations over to 'anjnaC'
-          if (parsed.repoName === 'Chakra') {
-            const migrated = {
-              owner: 'anjanaiz',
-              repoName: 'anjnaC',
-              branch: 'main',
-              connected: true
-            };
-            localStorage.setItem('chakra_github_repo', JSON.stringify(migrated));
-            return migrated;
-          }
-          return parsed;
-        }
-      } catch (e) {
-        console.error('Failed to parse github repo config', e);
-      }
+  // Database Connection States
+  const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null); // null = checking, true = connected, false = offline
+  const [dbError, setDbError] = useState<string | null>(null);
+  const [isDbChecking, setIsDbChecking] = useState<boolean>(false);
+
+  const checkDbOnlineStatus = async () => {
+    setIsDbChecking(true);
+    const online = await checkDbOnline();
+    setIsDbConnected(online);
+    if (online) {
+      setDbError(null);
+    } else {
+      setDbError("Unable to establish an online connection to the Firestore database. To prevent entering data that may be lost, additions and edits are locked until connected.");
     }
-    // Default to the user's specifically configured repo: anjnaC
-    const defaultRepo = {
-      owner: 'anjanaiz',
-      repoName: 'anjnaC',
-      branch: 'main',
-      connected: true
-    };
-    localStorage.setItem('chakra_github_repo', JSON.stringify(defaultRepo));
-    return defaultRepo;
-  });
-
-  const [repoOwnerInput, setRepoOwnerInput] = useState('anjanaiz');
-  const [repoNameInput, setRepoNameInput] = useState('anjnaC');
-  const [repoBranchInput, setRepoBranchInput] = useState('main');
-  const [isConfiguringRepo, setIsConfiguringRepo] = useState(false);
-
-  // High-fidelity GitHub sync tracker states
-  const [gitLastSynced, setGitLastSynced] = useState<string | null>(() => {
-    return localStorage.getItem('chakra_github_last_synced') || null;
-  });
-  const [gitCommits, setGitCommits] = useState<any[]>([]);
-  const [gitIsSyncing, setGitIsSyncing] = useState(false);
-  const [gitSyncError, setGitSyncError] = useState<string | null>(null);
-
-  // Primary function for pushing all layout items to GitHub
-  const syncLayoutToGitHub = async (customMessage?: string | null) => {
-    // If not connected, we can't sync
-    const savedRepoRaw = localStorage.getItem('chakra_github_repo');
-    let activeRepo = githubRepo;
-    if (!activeRepo && savedRepoRaw && savedRepoRaw !== 'null') {
-      try { activeRepo = JSON.parse(savedRepoRaw); } catch (_) {}
-    }
-    
-    if (!activeRepo || !activeRepo.connected) return;
-
-    setGitIsSyncing(true);
-    setGitSyncError(null);
-
-    try {
-      // Fetch currently added map elements from local storage
-      const rawMarkers = localStorage.getItem('chakra_event_layout_markers_v4');
-      const rawCategories = localStorage.getItem('chakra_event_custom_categories_v4');
-
-      let markers = [];
-      let customCategories = [];
-
-      if (rawMarkers) {
-        try { markers = JSON.parse(rawMarkers); } catch (_) {}
-      }
-      if (rawCategories) {
-        try { customCategories = JSON.parse(rawCategories); } catch (_) {}
-      }
-
-      const response = await fetch("/api/github/sync", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          owner: activeRepo.owner,
-          repoName: activeRepo.repoName,
-          branch: activeRepo.branch,
-          markers,
-          customCategories,
-          commitMessage: customMessage || `Sync ${markers.length} live map anchors & operational resources`
-        })
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setGitLastSynced(result.timestamp);
-        localStorage.setItem('chakra_github_last_synced', result.timestamp);
-        setGitCommits(result.commits || []);
-      } else {
-        setGitSyncError(result.error || "GitHub sync failed.");
-      }
-    } catch (e: any) {
-      setGitSyncError(e.message || "Failed to sync to GitHub.");
-    } finally {
-      setGitIsSyncing(false);
-    }
+    setIsDbChecking(false);
   };
 
-  // Synchronize on startup and setup custom event listeners
   useEffect(() => {
-    const fetchInitialGitData = async () => {
-      try {
-        const response = await fetch("/api/github/data");
-        const json = await response.json();
-        if (json.success) {
-          if (json.commits && json.commits.length > 0) {
-            setGitCommits(json.commits);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to load initial git history", e);
-      }
-    };
-    fetchInitialGitData();
+    checkDbOnlineStatus();
+    const interval = setInterval(checkDbOnlineStatus, 20000); // Check every 20 seconds
+    return () => clearInterval(interval);
   }, []);
-
-  // Listen to changes in map layouts and upload silently
-  useEffect(() => {
-    const handleMapDataChange = () => {
-      syncLayoutToGitHub();
-    };
-
-    window.addEventListener('chakra_map_data_changed', handleMapDataChange);
-    return () => {
-      window.removeEventListener('chakra_map_data_changed', handleMapDataChange);
-    };
-  }, [githubRepo]);
-
-  const handleDisconnectGithub = () => {
-    setGithubRepo(null);
-    localStorage.setItem('chakra_github_repo', 'null');
-    setGitCommits([]);
-    setGitLastSynced(null);
-    localStorage.removeItem('chakra_github_last_synced');
-  };
-
-  const handleConnectGithub = async (owner: string, name: string, branch: string) => {
-    const newRepo = {
-      owner: owner.trim() || 'anjanaiz',
-      repoName: name.trim() || 'anjnaC',
-      branch: branch.trim() || 'main',
-      connected: true
-    };
-    setGithubRepo(newRepo);
-    localStorage.setItem('chakra_github_repo', JSON.stringify(newRepo));
-    setIsConfiguringRepo(false);
-    
-    // Auto sync on connection to save all current data right away
-    setTimeout(() => {
-      syncLayoutToGitHub("init: establish repository connection & seed map elements");
-    }, 100);
-  };
 
   // Export all application data as backup JSON
   const handleExportAllData = () => {
@@ -290,7 +145,7 @@ export default function App() {
   // Read current date from metadata config / prompt
   const CURRENT_DATE_STRING = 'JUNE 13'; // Today is June 13, 2026
 
-  // 1. Initialize State with LocalStorage supporting persistence (used as fallback when unauthenticated)
+  // 1. Initialize State with LocalStorage supporting persistence (or blank arrays if empty, no auto-seeding mock data)
   const [categories, setCategories] = useState<Category[]>(() => {
     const saved = localStorage.getItem('chakra_cats');
     if (saved) {
@@ -300,7 +155,7 @@ export default function App() {
         console.error('Failed to parse categories state', e);
       }
     }
-    return INITIAL_CATEGORIES;
+    return [];
   });
 
   const [timeline, setTimeline] = useState<TimelineDay[]>(() => {
@@ -312,7 +167,7 @@ export default function App() {
         console.error('Failed to parse timeline state', e);
       }
     }
-    return INITIAL_TIMELINE;
+    return [];
   });
 
   // Track auth state
@@ -320,58 +175,21 @@ export default function App() {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
-      
-      if (currentUser) {
-        setSyncStatus('loading');
-        // Initial setup/seed if database was empty
-        await seedDatabaseIfEmpty();
-      } else {
-        setSyncStatus('offline');
-      }
     });
     return () => unsubscribe();
   }, []);
 
-  // Helper: Seed empty DB with standard defaults so user's project starts live instantly
-  const seedDatabaseIfEmpty = async () => {
-    try {
-      const catsSnapshot = await getDocs(collection(db, 'categories'));
-      if (catsSnapshot.empty) {
-        for (const cat of INITIAL_CATEGORIES) {
-          await setDoc(doc(db, 'categories', cat.id), cat);
-        }
-      }
-
-      const timelineSnapshot = await getDocs(collection(db, 'timeline'));
-      if (timelineSnapshot.empty) {
-        for (const day of INITIAL_TIMELINE) {
-          const dayId = 'day_' + day.date.replace(/\s+/g, '_').toLowerCase();
-          await setDoc(doc(db, 'timeline', dayId), day);
-        }
-      }
-    } catch (e) {
-      console.error("Error checking or seeding database:", e);
-      setSyncStatus('error');
-    }
-  };
-
-  // 2. Synchronize to LocalStorage upon changes (FALLBACK when unauthenticated)
+  // 2. Synchronize to LocalStorage upon changes (FALLBACK)
   useEffect(() => {
-    if (!user) {
-      localStorage.setItem('chakra_cats', JSON.stringify(categories));
-    }
-  }, [categories, user]);
+    localStorage.setItem('chakra_cats', JSON.stringify(categories));
+  }, [categories]);
 
   useEffect(() => {
-    if (!user) {
-      localStorage.setItem('chakra_timeline', JSON.stringify(timeline));
-    }
-  }, [timeline, user]);
+    localStorage.setItem('chakra_timeline', JSON.stringify(timeline));
+  }, [timeline]);
 
-  // 3. Realtime listening to database updates (only when logged in)
+  // 3. Realtime listening to database updates
   useEffect(() => {
-    if (!user) return;
-
     setSyncStatus('loading');
 
     // Live Subscribe: Categories
@@ -380,19 +198,16 @@ export default function App() {
       snapshot.forEach(doc => {
         list.push(doc.data() as Category);
       });
-      if (list.length > 0) {
-        // Maintain consistent display order
-        list.sort((a, b) => {
-          const idxA = INITIAL_CATEGORIES.findIndex(c => c.id === a.id);
-          const idxB = INITIAL_CATEGORIES.findIndex(c => c.id === b.id);
-          if (idxA === -1 && idxB === -1) return a.id.localeCompare(b.id);
-          if (idxA === -1) return 1;
-          if (idxB === -1) return -1;
-          return idxA - idxB;
-        });
-        setCategories(list);
-        setSyncStatus('synced');
-      }
+      list.sort((a, b) => {
+        const idxA = INITIAL_CATEGORIES.findIndex(c => c.id === a.id);
+        const idxB = INITIAL_CATEGORIES.findIndex(c => c.id === b.id);
+        if (idxA === -1 && idxB === -1) return a.id.localeCompare(b.id);
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+      setCategories(list);
+      setSyncStatus('synced');
     }, (err) => {
       console.error("Firestore categories snapshot error", err);
       setSyncStatus('error');
@@ -404,16 +219,13 @@ export default function App() {
       snapshot.forEach(doc => {
         list.push(doc.data() as TimelineDay);
       });
-      if (list.length > 0) {
-        // Maintain chronological order (June 12 -> June 28)
-        list.sort((a, b) => {
-          const idxA = INITIAL_TIMELINE.findIndex(d => d.date === a.date);
-          const idxB = INITIAL_TIMELINE.findIndex(d => d.date === b.date);
-          return idxA - idxB;
-        });
-        setTimeline(list);
-        setSyncStatus('synced');
-      }
+      list.sort((a, b) => {
+        const idxA = INITIAL_TIMELINE.findIndex(d => d.date === a.date);
+        const idxB = INITIAL_TIMELINE.findIndex(d => d.date === b.date);
+        return idxA - idxB;
+      });
+      setTimeline(list);
+      setSyncStatus('synced');
     }, (err) => {
       console.error("Firestore timeline snapshot error", err);
       setSyncStatus('error');
@@ -423,7 +235,7 @@ export default function App() {
       unsubscribeCats();
       unsubscribeTimeline();
     };
-  }, [user]);
+  }, []);
 
   // 4. Overwrite setCategories with cloud synchronization wrapper
   const handleSetCategories = async (newCats: Category[] | ((prev: Category[]) => Category[])) => {
@@ -437,25 +249,23 @@ export default function App() {
     // Always update React state immediately for zero-delay UI response
     setCategories(resolvedCats);
 
-    if (user) {
-      try {
-        setSyncStatus('loading');
-        // Save each modified category
-        for (const cat of resolvedCats) {
-          await setDoc(doc(db, 'categories', cat.id), cat);
-        }
-        // Prune deleted categories
-        const currentIds = new Set(resolvedCats.map(c => c.id));
-        for (const cat of categories) {
-          if (!currentIds.has(cat.id)) {
-            await deleteDoc(doc(db, 'categories', cat.id));
-          }
-        }
-        setSyncStatus('synced');
-      } catch (err) {
-        console.error("Firestore categories write field error:", err);
-        setSyncStatus('error');
+    try {
+      setSyncStatus('loading');
+      // Save each modified category
+      for (const cat of resolvedCats) {
+        await setDoc(doc(db, 'categories', cat.id), cat);
       }
+      // Prune deleted categories
+      const currentIds = new Set(resolvedCats.map(c => c.id));
+      for (const cat of categories) {
+        if (!currentIds.has(cat.id)) {
+          await deleteDoc(doc(db, 'categories', cat.id));
+        }
+      }
+      setSyncStatus('synced');
+    } catch (err) {
+      console.error("Firestore categories write field error:", err);
+      setSyncStatus('error');
     }
   };
 
@@ -471,54 +281,63 @@ export default function App() {
     // Always update React state immediately for zero-delay UI response
     setTimeline(resolvedTimeline);
 
-    if (user) {
-      try {
-        setSyncStatus('loading');
-        // Save each modified timeline day
-        for (const day of resolvedTimeline) {
-          const dayId = 'day_' + day.date.replace(/\s+/g, '_').toLowerCase();
-          await setDoc(doc(db, 'timeline', dayId), day);
-        }
-        // Prune deleted days
-        const currentDates = new Set(resolvedTimeline.map(d => d.date));
-        for (const day of timeline) {
-          if (!currentDates.has(day.date)) {
-            const dayId = 'day_' + day.date.replace(/\s+/g, '_').toLowerCase();
-            await deleteDoc(doc(db, 'timeline', dayId));
-          }
-        }
-        setSyncStatus('synced');
-      } catch (err) {
-        console.error("Firestore timeline write field error:", err);
-        setSyncStatus('error');
+    try {
+      setSyncStatus('loading');
+      // Save each modified timeline day
+      for (const day of resolvedTimeline) {
+        const dayId = 'day_' + day.date.replace(/\s+/g, '_').toLowerCase();
+        await setDoc(doc(db, 'timeline', dayId), day);
       }
+      // Prune deleted days
+      const currentDates = new Set(resolvedTimeline.map(d => d.date));
+      for (const day of timeline) {
+        if (!currentDates.has(day.date)) {
+          const dayId = 'day_' + day.date.replace(/\s+/g, '_').toLowerCase();
+          await deleteDoc(doc(db, 'timeline', dayId));
+        }
+      }
+      setSyncStatus('synced');
+    } catch (err) {
+      console.error("Firestore timeline write field error:", err);
+      setSyncStatus('error');
     }
   };
 
-  // Reset function to default data (wipes / overwrites DB)
-  const handleResetData = async () => {
-    if (confirm("Are you sure you want to reset all tracking progress data back to concert defaults?")) {
-      setCategories(INITIAL_CATEGORIES);
-      setTimeline(INITIAL_TIMELINE);
+  // Master Purge function to clean all data and databases completely
+  const handlePurgeAllData = async () => {
+    if (!confirm("Are you absolutely sure you want to completely PURGE and delete ALL data from the live Firestore database and LocalStorage? This will wipe out all categories, timeline days, operational tasks, map markers, and requirements for a completely fresh start. This action is permanent!")) {
+      return;
+    }
 
-      if (user) {
-        try {
-          setSyncStatus('loading');
-          // Clear and rewrite categories
-          for (const cat of INITIAL_CATEGORIES) {
-            await setDoc(doc(db, 'categories', cat.id), cat);
-          }
-          // Clear and rewrite timeline days
-          for (const day of INITIAL_TIMELINE) {
-            const dayId = 'day_' + day.date.replace(/\s+/g, '_').toLowerCase();
-            await setDoc(doc(db, 'timeline', dayId), day);
-          }
-          setSyncStatus('synced');
-        } catch (err) {
-          console.error("Firestore reset database overwrite error:", err);
-          setSyncStatus('error');
+    setSyncStatus('loading');
+    try {
+      // Clear React states
+      setCategories([]);
+      setTimeline([]);
+
+      // Clear LocalStorage
+      localStorage.removeItem('chakra_cats');
+      localStorage.removeItem('chakra_timeline');
+      localStorage.removeItem('chakra_event_layout_markers_v4');
+      localStorage.removeItem('chakra_event_custom_categories_v4');
+      localStorage.removeItem('chakra_event_requirements');
+      localStorage.removeItem('chakra_general_tasks');
+
+      // Delete doc records in Firestore of all collections
+      const collectionsToPurge = ['categories', 'timeline', 'general_tasks', 'map_markers', 'map_categories', 'event_requirements'];
+      for (const colName of collectionsToPurge) {
+        const snap = await getDocs(collection(db, colName));
+        for (const docItem of snap.docs) {
+          await deleteDoc(doc(db, colName, docItem.id));
         }
       }
+
+      setSyncStatus('synced');
+      alert("All live database collections and local cache keys have been successfully purged! The system is now 100% clean and ready.");
+      window.location.reload();
+    } catch (err: any) {
+      console.error("Purge fail:", err);
+      alert("Error purging database: " + err.message);
     }
   };
 
@@ -571,6 +390,51 @@ export default function App() {
           </div>
 
           <div className="border-t border-white/5 my-1" />
+
+          {/* Database Connection Status Card / Indicator */}
+          <div className="px-2 mb-4">
+            {isDbConnected === false ? (
+              <div className="bg-red-500/10 border border-red-500/20 p-3.5 rounded-xl space-y-1.5 text-red-400 font-mono text-[10px]">
+                <div className="flex items-center gap-1.5 font-bold uppercase text-[9px] tracking-wider text-red-500">
+                  <X className="text-red-500 select-none" size={12} />
+                  Operational Warning: DB Offline
+                </div>
+                <p className="leading-relaxed text-zinc-400 text-[9.5px]">
+                  Unable to connect to live Firestore server <b>ai-studio-98bb09c5...</b>. Editing is locked.
+                </p>
+                <button 
+                  onClick={checkDbOnlineStatus}
+                  className="w-full mt-1.5 py-1 bg-red-500/20 hover:bg-red-500/35 text-red-300 font-bold tracking-wider rounded text-[9px] uppercase transition cursor-pointer"
+                >
+                  Retry Connection
+                </button>
+              </div>
+            ) : isDbConnected === true ? (
+              <div className="bg-emerald-500/10 border border-emerald-500/15 p-3 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-wider text-emerald-400 font-bold font-mono">FIRESTORE ACTIVE</span>
+                    <span className="block text-[10px] text-zinc-300 font-medium font-mono">ai-studio-98bb09c5-...</span>
+                  </div>
+                </div>
+                <span className="text-[7.5px] uppercase tracking-wider text-emerald-500 px-1 bg-emerald-500/10 rounded font-mono font-bold">Live</span>
+              </div>
+            ) : (
+              <div className="bg-zinc-500/10 border border-zinc-500/10 p-3 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5 animate-pulse">
+                  <RefreshCw size={11} className="animate-spin text-zinc-400" />
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-wider text-zinc-400 font-bold font-mono">VERIFYING DB...</span>
+                    <span className="block text-[10px] text-zinc-400 font-mono">Checking connection...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Navigation Link Items */}
           <div className="space-y-2 flex-1" id="sidebar-nav">
@@ -673,287 +537,20 @@ export default function App() {
               }`} />
             </button>
 
-            {/* Real-time Google Authentication & Sync panel */}
-            <div className="pt-4 border-t border-white/5 mt-4">
-              <div className="bg-white/5 p-4 rounded-xl border border-white/10 relative overflow-hidden space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] uppercase text-white/40 font-mono tracking-wider font-semibold flex items-center gap-1">
-                    <Database size={10} className="text-[#FF6B00]" /> Collaboration
-                  </span>
-                  
-                  {/* Status Indicator */}
-                  {syncStatus === 'synced' && (
-                    <span className="text-[8px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <span className="h-1 w-1 bg-emerald-400 rounded-full animate-pulse" /> Live Sync
-                    </span>
-                  )}
-                  {syncStatus === 'loading' && (
-                    <span className="text-[8px] font-mono text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <RefreshCw size={8} className="animate-spin" /> Syncing
-                    </span>
-                  )}
-                  {syncStatus === 'offline' && (
-                    <span className="text-[8px] font-mono text-white/40 font-bold bg-white/5 px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <span className="h-1 w-1 bg-white/40 rounded-full" /> Local Info
-                    </span>
-                  )}
-                  {syncStatus === 'error' && (
-                    <span className="text-[8px] font-mono text-red-400 font-bold bg-red-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <span className="h-1 w-1 bg-red-400 rounded-full animate-pulse" /> Sync Err
-                    </span>
-                  )}
-                </div>
-
-                {user ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      {user.photoURL ? (
-                        <img 
-                          src={user.photoURL} 
-                          alt={user.displayName || "User"} 
-                          className="h-7 w-7 rounded-full border border-[#FF6B00]/40"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="h-7 w-7 rounded-full bg-[#FF6B00]/25 flex items-center justify-center font-bold text-xs text-[#FF6B00]">
-                          {user.displayName?.charAt(0) || "U"}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="text-white text-[11px] font-bold font-display truncate leading-tight">
-                          {user.displayName || "Manager"}
-                        </div>
-                        <div className="text-[8px] text-white/40 truncate font-mono">
-                          {user.email}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={handleAuthAction}
-                      className="w-full flex items-center justify-center gap-1 py-1 bg-red-500/5 hover:bg-red-500/15 border border-red-500/10 rounded text-[9px] font-mono text-red-400 transition cursor-pointer"
-                    >
-                      <LogOut size={8} />
-                      DISCONNECT
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-[9px] text-white/40 leading-relaxed font-mono">
-                      Authorize with Google to sync edits in real-time.
-                    </p>
-                    <button
-                      onClick={handleAuthAction}
-                      className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 border border-[#FF6B00]/20 rounded-lg text-[9px] font-mono text-[#FF6B00] hover:text-[#FF6B00] transition cursor-pointer uppercase tracking-wider font-bold"
-                    >
-                      <LogIn size={10} />
-                      Share & Live Sync
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Sync to GitHub Section */}
-            <div className="pt-4 border-t border-white/5 mt-4">
-              <div className="bg-white/5 p-4 rounded-xl border border-white/10 relative overflow-hidden space-y-3" id="github-sync-section">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] uppercase text-white/40 font-mono tracking-wider font-semibold flex items-center gap-1.5">
-                    <GitBranch size={10} className="text-[#FF6B00]" /> Sync to GitHub
-                  </span>
-                  {githubRepo?.connected && !isConfiguringRepo ? (
-                    <span className="text-[8px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" /> Connected
-                    </span>
-                  ) : (
-                    <span className="text-[8px] font-mono text-white/30 bg-white/5 px-1.5 py-0.5 rounded flex items-center gap-1">
-                      Setup Repo
-                    </span>
-                  )}
-                </div>
-
-                {githubRepo && githubRepo.connected && !isConfiguringRepo ? (
-                  <div className="space-y-3">
-                    <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 space-y-1.5">
-                      <div className="text-[11px] font-bold text-white font-display truncate">
-                        {githubRepo.owner}/{githubRepo.repoName}
-                      </div>
-                      <div className="flex items-center justify-between text-[8px] text-white/40 font-mono">
-                        <span className="flex items-center gap-1">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#FF6B00]" /> branch: <span className="text-white/60">{githubRepo.branch}</span>
-                        </span>
-                        <span className="text-[7.5px] uppercase tracking-wider px-1 bg-white/5 rounded text-white/50">GitHub Live Sync</span>
-                      </div>
-                    </div>
-
-                    {/* LAST SYNCED TIMESTAMP DISPLAY */}
-                    <div className="space-y-1" id="last-synced-container">
-                      <label className="text-[7.5px] text-white/30 uppercase font-mono tracking-wider">Sync Status</label>
-                      {gitLastSynced ? (
-                        <div className="flex items-center gap-1.5 text-[9px] bg-emerald-500/5 border border-emerald-500/10 px-2 py-1.5 rounded-lg">
-                          <CheckCircle size={10} className="text-emerald-400 shrink-0" />
-                          <div className="leading-tight flex-1">
-                            <span className="text-[7.5px] text-emerald-400/80 block uppercase font-mono tracking-wider font-semibold">Synchronization Active</span>
-                            <span className="font-mono text-zinc-300 font-medium text-[9px]">{gitLastSynced}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-[9px] bg-[#FF6B00]/5 border border-[#FF6B00]/10 px-2 py-1.5 rounded-lg">
-                          <Info size={10} className="text-[#FF6B00] shrink-0 animate-pulse" />
-                          <div className="leading-tight flex-1">
-                            <span className="text-[7.5px] text-[#FF6B00]/80 block uppercase font-mono tracking-wider font-semibold">Pending Initial Push</span>
-                            <span className="font-mono text-zinc-400 text-[8.5px]">Seeding workspace directory...</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* RECENT ACTIVITY / RECENT COMMITS TIMELINE DISPLAY */}
-                    <div className="space-y-1">
-                      <label className="text-[7.5px] text-white/30 uppercase font-mono tracking-wider flex items-center gap-1">
-                        <History size={7.5} /> Recent Workspace Commits
-                      </label>
-                      {gitCommits && gitCommits.length > 0 ? (
-                        <div className="space-y-1 max-h-[140px] overflow-y-auto pr-1 select-none custom-scrollbar pb-1">
-                          {gitCommits.slice(0, 3).map((commit: any, idx: number) => (
-                            <div key={idx} className="bg-black/35 border border-white/5 rounded-md p-1.5 font-mono text-[8.2px] leading-normal transition hover:border-white/10">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[#FF6B00] font-bold">git commit #{commit.hash}</span>
-                                <span className="text-[7.5px] text-white/30">{commit.timestamp.split(', ')[1] || commit.timestamp}</span>
-                              </div>
-                              <p className="text-zinc-400 mt-0.5 line-clamp-1">{commit.message}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-[8px] font-mono text-white/20 italic py-1 bg-black/10 rounded-md text-center border border-white/5">
-                          No recent pushes. Trigger manual sync below.
-                        </div>
-                      )}
-                    </div>
-
-                    {/* MANUAL TRIGGER SYNC BUTTON */}
-                    <button
-                      onClick={() => syncLayoutToGitHub()}
-                      disabled={gitIsSyncing}
-                      className={`w-full flex items-center justify-center gap-2 py-1.5 border rounded-lg text-[9px] font-mono font-bold transition uppercase tracking-wider cursor-pointer ${
-                        gitIsSyncing 
-                        ? "bg-zinc-800 text-zinc-400 border-zinc-700 pointer-events-none" 
-                        : "bg-[#FF6B00]/10 hover:bg-[#FF6B00]/25 border-[#FF6B00]/25 text-[#FF6B00]"
-                      }`}
-                      id="manual-sync-github-btn"
-                    >
-                      {gitIsSyncing ? (
-                        <>
-                          <RefreshCw size={10} className="animate-spin" />
-                          Pushing Map Layout...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw size={10} />
-                          Manual Push Sync
-                        </>
-                      )}
-                    </button>
-
-                    {gitSyncError && (
-                      <div className="text-[8px] font-mono text-red-400 bg-red-500/5 px-2 py-1 border border-red-500/10 rounded">
-                        Error: {gitSyncError}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
-                        onClick={() => {
-                          setRepoOwnerInput(githubRepo.owner);
-                          setRepoNameInput(githubRepo.repoName);
-                          setRepoBranchInput(githubRepo.branch);
-                          setIsConfiguringRepo(true);
-                        }}
-                        className="flex items-center justify-center gap-1 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[9px] font-mono text-white/80 transition cursor-pointer font-medium uppercase tracking-wider"
-                        id="edit-github-btn"
-                      >
-                        Edit Repo
-                      </button>
-                      <button
-                        onClick={handleDisconnectGithub}
-                        className="flex items-center justify-center gap-1 py-1.5 bg-red-500/5 hover:bg-red-500/15 border border-red-500/10 rounded-lg text-[9px] font-mono text-red-400 transition cursor-pointer font-medium uppercase tracking-wider"
-                        id="disconnect-github-btn"
-                      >
-                        Disconnect
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="space-y-1.5">
-                      <div>
-                        <label className="text-[8px] text-white/40 block mb-1 font-semibold tracking-wider font-mono">OWNER / ORGANIZATION</label>
-                        <input
-                          type="text"
-                          value={repoOwnerInput}
-                          onChange={(e) => setRepoOwnerInput(e.target.value)}
-                          placeholder="e.g. anjanaiz"
-                          className="w-full bg-black/40 border border-white/10 rounded-lg text-white text-[10px] px-2 py-1.5 focus:outline-none focus:border-[#FF6B00] font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[8px] text-white/40 block mb-1 font-semibold tracking-wider font-mono">REPOSITORY NAME</label>
-                        <input
-                          type="text"
-                          value={repoNameInput}
-                          onChange={(e) => setRepoNameInput(e.target.value)}
-                          placeholder="e.g. anjnaC"
-                          className="w-full bg-black/40 border border-white/10 rounded-lg text-white text-[10px] px-2 py-1.5 focus:outline-none focus:border-[#FF6B00] font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[8px] text-white/40 block mb-1 font-semibold tracking-wider font-mono">BRANCH</label>
-                        <input
-                          type="text"
-                          value={repoBranchInput}
-                          onChange={(e) => setRepoBranchInput(e.target.value)}
-                          placeholder="e.g. main"
-                          className="w-full bg-black/40 border border-white/10 rounded-lg text-white text-[10px] px-2 py-1.5 focus:outline-none focus:border-[#FF6B00] font-mono"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 pt-1">
-                      {isConfiguringRepo && (
-                        <button
-                          onClick={() => setIsConfiguringRepo(false)}
-                          className="flex-1 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-mono text-white/60 transition cursor-pointer hover:bg-white/10 text-center"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleConnectGithub(repoOwnerInput, repoNameInput, repoBranchInput)}
-                        className="flex-1 py-1.5 bg-[#FF6B00]/20 hover:bg-[#FF6B00]/30 border border-[#FF6B00]/40 rounded-lg text-[9px] font-mono text-[#FF6B00] font-bold transition cursor-pointer text-center uppercase tracking-wider"
-                      >
-                        Connect & Sync
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Vercel Deployment & Migration Card */}
+            {/* Storage Backup Kit */}
             <div className="pt-4 border-t border-white/5 mt-4">
               <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3" id="vercel-migration-section">
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] uppercase text-white/40 font-mono tracking-wider font-semibold flex items-center gap-1.5">
-                    <Download size={10} className="text-[#FF6B00]" /> Vercel Migration
+                    <Download size={10} className="text-[#FF6B00]" /> Storage Backup Kit
                   </span>
                   <span className="text-[7.5px] font-mono text-zinc-400 bg-white/5 px-1 py-0.5 rounded">
-                    Data Sync
+                    JSON File
                   </span>
                 </div>
                 
                 <p className="text-[9px] text-white/40 leading-relaxed font-mono">
-                  Origin domain limits prevent local storage from transferring to Vercel automatically. Use this migration kit to export your current layout and import it on Vercel instantly.
+                  Export your compiled event configs, timelines, tasks and layout maps to a backup file, or load them back instantly.
                 </p>
 
                 <div className="grid grid-cols-2 gap-2 pt-1">
@@ -1017,10 +614,10 @@ export default function App() {
 
           {/* Reset controller action */}
           <button 
-            onClick={handleResetData}
-            className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-center text-[10px] font-mono text-white/50 hover:text-white transition cursor-pointer uppercase tracking-wider"
+            onClick={handlePurgeAllData}
+            className="w-full py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-center text-[10px] font-mono text-red-400 hover:text-red-300 transition cursor-pointer uppercase tracking-wider font-bold"
           >
-            Reset All Staging Data
+            Factory Reset (Clean DB)
           </button>
         </div>
       </aside>
@@ -1164,14 +761,14 @@ export default function App() {
             <div className="pt-2 flex justify-between items-center border-t border-white/5">
               <button
                 onClick={() => {
-                  handleResetData();
+                  handlePurgeAllData();
                   setMobileMenuOpen(false);
                 }}
-                className="text-[10px] font-mono text-red-400 py-1"
+                className="text-[10px] font-mono text-red-400 py-1 font-bold uppercase"
               >
-                RESET ALL DATA
+                FACTORY RESET (WIPE DB)
               </button>
-              <span className="text-[10px] font-mono text-white/30">Venue: Air Force Grounds</span>
+              <span className="text-[10px] font-mono text-white/30 font-semibold uppercase">Venue: Air Force Grounds</span>
             </div>
           </div>
         )}
@@ -1220,7 +817,7 @@ export default function App() {
           )}
 
           {/* WORK AREA CHANGER */}
-          <div className="bg-[#0C0C0C]/40 border border-white/5 p-1 rounded-2xl md:p-0 md:bg-transparent md:border-transparent" id="active-tab-container">
+          <div className="bg-[#0C0C0C]/40 border border-white/5 p-1 rounded-2xl md:p-0 md:bg-transparent md:border-transparent relative overflow-hidden min-h-[300px]" id="active-tab-container">
             {activeTab === 'shoot' ? (
               <ShootListTab 
                 categories={categories} 
@@ -1238,6 +835,27 @@ export default function App() {
               <EventRequirementsTab />
             ) : (
               <TaskPlannerTab />
+            )}
+
+            {/* Locked Database Offline Overlay Banner */}
+            {isDbConnected === false && (
+              <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center space-y-4">
+                <div className="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center text-red-500 animate-pulse">
+                  <XCircle size={32} />
+                </div>
+                <h3 className="font-display font-extrabold text-white text-lg tracking-wide uppercase">
+                  Database Connection Locked
+                </h3>
+                <p className="text-zinc-400 text-xs max-w-sm leading-relaxed font-mono">
+                  Your live connection to the Firestore production cluster is offline. New data insertions have been locked to prevent cache state conflicts and unexpected data loss.
+                </p>
+                <button 
+                  onClick={checkDbOnlineStatus}
+                  className="px-5 py-2.5 bg-[#FF6B00] hover:bg-[#FF852B] text-zinc-950 font-black font-mono text-xs uppercase rounded-xl transition shadow-[0_0_15px_rgba(255,107,0,0.3)] cursor-pointer"
+                >
+                  Retry Host Handshake
+                </button>
+              </div>
             )}
           </div>
         </div>

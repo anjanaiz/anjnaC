@@ -17,6 +17,8 @@ import {
   Layers,
   FileSpreadsheet
 } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 
 export interface RequirementItem {
   id: string;
@@ -95,13 +97,16 @@ export const EventRequirementsTab: React.FC = () => {
     const saved = localStorage.getItem('chakra_event_requirements');
     if (saved) {
       try {
-        return JSON.parse(saved);
-      } catch (err) {
-        console.error('Failed to parse legacy requirements schema', err);
-      }
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.length > 0) return parsed;
+      } catch (_) {}
     }
-    return DEFAULT_REQUIREMENTS;
+    return [];
   });
+
+  useEffect(() => {
+    localStorage.setItem('chakra_event_requirements', JSON.stringify(categories));
+  }, [categories]);
 
   // Track category in active view if user prefers a grid/filter layout
   const [selectedFilterCategory, setSelectedFilterCategory] = useState<string>('all');
@@ -123,13 +128,33 @@ export const EventRequirementsTab: React.FC = () => {
   // Search keyword for consolidated summary filter
   const [consolidatedSearch, setConsolidatedSearch] = useState('');
 
-  // Persist State
+  // Real-time synchronization unconditionally
   useEffect(() => {
-    localStorage.setItem('chakra_event_requirements', JSON.stringify(categories));
-  }, [categories]);
+    const path = 'event_requirements';
+    const unsubscribe = onSnapshot(collection(db, path), (snapshot) => {
+      const list: RequirementCategory[] = [];
+      snapshot.forEach(doc => {
+        list.push(doc.data() as RequirementCategory);
+      });
+      list.sort((a, b) => {
+        const idxA = DEFAULT_REQUIREMENTS.findIndex(r => r.id === a.id);
+        const idxB = DEFAULT_REQUIREMENTS.findIndex(r => r.id === b.id);
+        if (idxA === -1 && idxB === -1) return a.id.localeCompare(b.id);
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+      setCategories(list);
+      localStorage.setItem('chakra_event_requirements', JSON.stringify(list));
+    }, (err) => {
+      console.error("Firestore event_requirements snapshot error:", err);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Create Category
-  const handleAddCategory = (e: React.FormEvent) => {
+  const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoryInput.trim()) return;
 
@@ -147,22 +172,30 @@ export const EventRequirementsTab: React.FC = () => {
       isCustom: true
     };
 
-    setCategories(prev => [...prev, newCatObj]);
     setCategoryInput('');
+    try {
+      await setDoc(doc(db, 'event_requirements', newCatObj.id), newCatObj);
+    } catch (err) {
+      console.error("Failed to add requirements category in Firestore:", err);
+    }
   };
 
   // Delete custom category
-  const handleDeleteCategory = (catId: string, name: string) => {
+  const handleDeleteCategory = async (catId: string, name: string) => {
     if (confirm(`Are you sure you want to remove the entire category "${name}"? This deletes all associated requirement items.`)) {
-      setCategories(prev => prev.filter(c => c.id !== catId));
       if (selectedFilterCategory === catId) {
         setSelectedFilterCategory('all');
+      }
+      try {
+        await deleteDoc(doc(db, 'event_requirements', catId));
+      } catch (err) {
+        console.error("Failed to delete requirements category from Firestore:", err);
       }
     }
   };
 
   // Add Item inside Category
-  const handleAddItem = (catId: string) => {
+  const handleAddItem = async (catId: string) => {
     const name = newItemName[catId]?.trim() || '';
     const qty = newItemQty[catId] || 1;
     const notes = newItemNotes[catId]?.trim() || '';
@@ -179,33 +212,39 @@ export const EventRequirementsTab: React.FC = () => {
       notes: notes || undefined
     };
 
-    setCategories(prev => prev.map(cat => {
-      if (cat.id === catId) {
-        return {
-          ...cat,
-          items: [...cat.items, newItem]
-        };
-      }
-      return cat;
-    }));
-
     // Clear state inputs for this specific category
     setNewItemName(prev => ({ ...prev, [catId]: '' }));
     setNewItemQty(prev => ({ ...prev, [catId]: 1 }));
     setNewItemNotes(prev => ({ ...prev, [catId]: '' }));
+
+    const targetCat = categories.find(c => c.id === catId);
+    if (targetCat) {
+      try {
+        const updatedCat = {
+          ...targetCat,
+          items: [...targetCat.items, newItem]
+        };
+        await setDoc(doc(db, 'event_requirements', catId), updatedCat);
+      } catch (err) {
+        console.error("Failed to add requirement item to Firestore:", err);
+      }
+    }
   };
 
   // Delete Item from Category
-  const handleDeleteItem = (catId: string, itemId: string) => {
-    setCategories(prev => prev.map(cat => {
-      if (cat.id === catId) {
-        return {
-          ...cat,
-          items: cat.items.filter(item => item.id !== itemId)
+  const handleDeleteItem = async (catId: string, itemId: string) => {
+    const targetCat = categories.find(c => c.id === catId);
+    if (targetCat) {
+      try {
+        const updatedCat = {
+          ...targetCat,
+          items: targetCat.items.filter(item => item.id !== itemId)
         };
+        await setDoc(doc(db, 'event_requirements', catId), updatedCat);
+      } catch (err) {
+        console.error("Failed to delete requirement item from Firestore:", err);
       }
-      return cat;
-    }));
+    }
   };
 
   // Trigger inline Edit configuration
@@ -217,17 +256,20 @@ export const EventRequirementsTab: React.FC = () => {
   };
 
   // Save inline edits
-  const saveItemEdits = (catId: string, itemId: string) => {
+  const saveItemEdits = async (catId: string, itemId: string) => {
     if (!editingItemName.trim()) {
       alert("Item name cannot be empty.");
       return;
     }
 
-    setCategories(prev => prev.map(cat => {
-      if (cat.id === catId) {
-        return {
-          ...cat,
-          items: cat.items.map(item => {
+    setEditingItemId(null);
+
+    const targetCat = categories.find(c => c.id === catId);
+    if (targetCat) {
+      try {
+        const updatedCat = {
+          ...targetCat,
+          items: targetCat.items.map(item => {
             if (item.id === itemId) {
               return {
                 ...item,
@@ -239,41 +281,55 @@ export const EventRequirementsTab: React.FC = () => {
             return item;
           })
         };
+        await setDoc(doc(db, 'event_requirements', catId), updatedCat);
+      } catch (err) {
+        console.error("Failed to update requirement item in Firestore:", err);
       }
-      return cat;
-    }));
-
-    setEditingItemId(null);
+    }
   };
 
   // Quick increment / decrement functions
-  const adjustItemQty = (catId: string, itemId: string, step: number) => {
-    setCategories(prev => prev.map(cat => {
-      if (cat.id === catId) {
-        return {
-          ...cat,
-          items: cat.items.map(item => {
+  const adjustItemQty = async (catId: string, itemId: string, step: number) => {
+    const targetCat = categories.find(c => c.id === catId);
+    if (targetCat) {
+      try {
+        const updatedCat = {
+          ...targetCat,
+          items: targetCat.items.map(item => {
             if (item.id === itemId) {
-              const newQty = Math.max(1, item.quantity + step);
               return {
                 ...item,
-                quantity: newQty
+                quantity: Math.max(1, item.quantity + step)
               };
             }
             return item;
           })
         };
+        await setDoc(doc(db, 'event_requirements', catId), updatedCat);
+      } catch (err) {
+        console.error("Failed to adjust requirement item quantity in Firestore:", err);
       }
-      return cat;
-    }));
+    }
   };
 
   // Reset to default
-  const handleResetToDefault = () => {
+  const handleResetToDefault = async () => {
     if (confirm("Reset requirements back to template spec? This overrides current quantities and custom added requirements.")) {
-      setCategories(DEFAULT_REQUIREMENTS);
       setSelectedFilterCategory('all');
       setEditingItemId(null);
+
+      try {
+        // Clear all current categories from Firestore first
+        for (const cat of categories) {
+          await deleteDoc(doc(db, 'event_requirements', cat.id));
+        }
+        // Write the defaults
+        for (const cat of DEFAULT_REQUIREMENTS) {
+          await setDoc(doc(db, 'event_requirements', cat.id), cat);
+        }
+      } catch (err) {
+        console.error("Failed to reset requirements back to default, Firestore error:", err);
+      }
     }
   };
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import savedMarkers from '../github-repo/markers.json';
 import savedCategories from '../github-repo/custom_categories.json';
+import { db, handleFirestoreError, OperationType } from '../firebase';
+import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 import { 
   Sparkles, 
   Sliders, 
@@ -133,17 +135,18 @@ const INITIAL_MARKERS: MapMarker[] = [
     title: 'Stage Setup',
     category: 'production',
     x: 50,
-    y: 50,
+    y: 18,
     iconName: 'stage',
-    description: 'The main stage positioned perfectly at the center of the SLAF Grounds layout plan.',
+    description: 'The main performance stage positioned perfectly at the center of the SLAF Grounds layout plan.',
     notes: 'Epicenter of full-field performance aesthetics and audio alignment.',
-    capacity: 'Performance cast & crew',
+    capacity: 'Performance cast & crew (150 max)',
     powerLoad: '120kW Stable',
     resources: [
       { id: 'res_stage_1', name: 'Stage Truss Support Grid', quantity: 1 },
       { id: 'res_stage_2', name: 'Line Array Audio Towers', quantity: 2 },
       { id: 'res_stage_3', name: 'LED Video Panel Backdrop', quantity: 1 },
-      { id: 'res_stage_4', name: 'Security Barricades', quantity: 12 }
+      { id: 'res_stage_4', name: 'Security Barricades', quantity: 12 },
+      { id: 'res_stage_5', name: 'Stage Monitors & Mic Stands', quantity: 8 }
     ]
   },
   {
@@ -151,7 +154,7 @@ const INITIAL_MARKERS: MapMarker[] = [
     title: 'FOH',
     category: 'production',
     x: 50,
-    y: 82,
+    y: 75,
     iconName: 'foh',
     description: 'Front Of House technical control unit, situated safely outside the main 30-unit circular seated audience zone.',
     notes: 'Synchronizes audio mixers, projection consoles, and visual feeds.',
@@ -161,6 +164,405 @@ const INITIAL_MARKERS: MapMarker[] = [
       { id: 'res_foh_1', name: 'Digital Audio Mixing Console', quantity: 1 },
       { id: 'res_foh_2', name: 'DMX Lighting Controller Board', quantity: 1 },
       { id: 'res_foh_3', name: 'Production Talkback Intercoms', quantity: 5 }
+    ]
+  },
+  {
+    id: 'm_artists_green_room',
+    title: 'Artists Green Room',
+    category: 'hospitality',
+    x: 25,
+    y: 12,
+    iconName: 'vip',
+    description: 'Exclusive air-conditioned waiting room and preparation lounge for featured concert artists and guest singers.',
+    notes: 'Located backstage on the left side with direct performance stage entrance.',
+    capacity: '20 VIP Guests',
+    powerLoad: '15kW Stable',
+    resources: [
+      { id: 'res_agr_1', name: 'Comfortable Sofas', quantity: 4 },
+      { id: 'res_agr_2', name: 'Lighted Makeup Desks with Mirrors', quantity: 2 },
+      { id: 'res_agr_3', name: 'Water Dispenser & Beverages', quantity: 1 },
+      { id: 'res_agr_4', name: 'Split AC Unit 24000BTU', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_band_rest_room',
+    title: 'Band Rest Room',
+    category: 'hospitality',
+    x: 75,
+    y: 12,
+    iconName: 'vip',
+    description: 'Spacious relaxation room for backing bands, musicians, and stage instrumentation crew.',
+    notes: 'Located backstage on the right side. Close to heavy technical loading bays.',
+    capacity: '25 Crew Members',
+    powerLoad: '12kW Stable',
+    resources: [
+      { id: 'res_brr_1', name: 'Refreshment Tables', quantity: 2 },
+      { id: 'res_brr_2', name: 'Executive Chairs', quantity: 10 },
+      { id: 'res_brr_3', name: 'Acoustic Tuning Station', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_main_gate',
+    title: 'Main Gate Entrance',
+    category: 'access',
+    x: 50,
+    y: 95,
+    iconName: 'entrance',
+    description: 'Primary public admission terminal with multi-lane scanning gates for General and VIP queue lines.',
+    notes: 'Monitored by SLAF security personnel and ticketing agents.',
+    capacity: '3000 entrants / hour',
+    powerLoad: '5kW UPS Backed',
+    resources: [
+      { id: 'res_mg_1', name: 'Barcode Ticket Scanners', quantity: 6 },
+      { id: 'res_mg_2', name: 'Pedestrian Crowd Control Barricades', quantity: 20 },
+      { id: 'res_mg_3', name: 'High-visibility Entrance Signage', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_vip_gate',
+    title: 'VIP Entrance Gate',
+    category: 'access',
+    x: 15,
+    y: 95,
+    iconName: 'entrance',
+    description: 'Fast-track premium entrance gate exclusive for VIP pass holders, sponsors, and guest delegates.',
+    notes: 'Features carpeted walk path and direct line to VIP hospitality booths.',
+    capacity: '800 entrants / hour',
+    powerLoad: '3kW Stable',
+    resources: [
+      { id: 'res_vg_1', name: 'Ticketing Counters', quantity: 2 },
+      { id: 'res_vg_2', name: 'Red Carpet Walkway Strip', quantity: 1 },
+      { id: 'res_vg_3', name: 'VIP Wristbands Bin', quantity: 2 }
+    ]
+  },
+  {
+    id: 'm_prod_gate',
+    title: 'Production Support Gate',
+    category: 'access',
+    x: 93,
+    y: 18,
+    iconName: 'entrance',
+    description: 'Heavy vehicle entry gate designed exclusively for logistics trucks, equipment loaders, catering, and service staff.',
+    notes: 'Strict ID checking area, active 24/7 during setup and pulldown phases.',
+    capacity: 'Vehicular logistics ONLY',
+    powerLoad: '2kW Stable',
+    resources: [
+      { id: 'res_pg_1', name: 'Vehicular Boom Gate Barrier', quantity: 1 },
+      { id: 'res_pg_2', name: 'Security Guard Outpost canopy', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_ticket_counter',
+    title: 'Ticket Counter & Registry',
+    category: 'access',
+    x: 42,
+    y: 88,
+    iconName: 'entrance',
+    description: 'On-site ticket sales desk, reservation claims desk, and helper registration station.',
+    notes: 'Equipped with offline local network switches for secure claims database check.',
+    capacity: '10 Agents max',
+    powerLoad: '8kW Generators',
+    resources: [
+      { id: 'res_tc_1', name: 'Laptop Computer Sets', quantity: 4 },
+      { id: 'res_tc_2', name: 'Thermal Receipt Ticket Printers', quantity: 4 },
+      { id: 'res_tc_3', name: 'SLAF Field Tables', quantity: 2 }
+    ]
+  },
+  {
+    id: 'm_food_court_1',
+    title: 'Main Food Stall - Kottu Hub',
+    category: 'stall',
+    x: 12,
+    y: 42,
+    iconName: 'stall',
+    description: 'Popular vendor stall offering hot kottu and street snacks to the audience belt.',
+    notes: 'Strict fire safety compliance: gas cylinders chained outside the vendor canopy bounds.',
+    capacity: '4 Culinary workers',
+    powerLoad: '10kW Stable',
+    resources: [
+      { id: 'res_fc1_1', name: 'Heavy Duty Canopy 10x10', quantity: 1 },
+      { id: 'res_fc1_2', name: 'Hot Plates / Grills', quantity: 2 },
+      { id: 'res_fc1_3', name: 'Dry Powder Fire Extinguisher', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_food_court_2',
+    title: 'Beverage & Soft Drinks Stall',
+    category: 'stall',
+    x: 12,
+    y: 52,
+    iconName: 'stall',
+    description: 'Beverage kiosk serving soft drinks, fruit juices, milkshakes, and bottled water.',
+    notes: 'Equipped with cold storage chest freezers for rapid cooling.',
+    capacity: '3 Staff members',
+    powerLoad: '7kW Stable',
+    resources: [
+      { id: 'res_fc2_1', name: 'Beverage Chest Freezers', quantity: 2 },
+      { id: 'res_fc2_2', name: 'Plastic Dispenser Pitchers', quantity: 5 },
+      { id: 'res_fc2_3', name: 'Waste Disposal Bins', quantity: 2 }
+    ]
+  },
+  {
+    id: 'm_sponsor_stall',
+    title: 'Sponsor Activation Stall',
+    category: 'stall',
+    x: 88,
+    y: 45,
+    iconName: 'stall',
+    description: 'Merchandise distribution, interactive brand games, and promo giveaway stalls.',
+    notes: 'Features corporate backdrop flyers and ambient speaker.',
+    capacity: '6 Brand partners',
+    powerLoad: '6kW Standard',
+    resources: [
+      { id: 'res_ss_1', name: 'Branded Backdrop Truss', quantity: 1 },
+      { id: 'res_ss_2', name: 'Pillar Speakers with Mic', quantity: 2 },
+      { id: 'res_ss_3', name: 'Flyer Pamphlet Holders', quantity: 4 }
+    ]
+  },
+  {
+    id: 'm_beer_garden',
+    title: 'Beer Garden Lounge',
+    category: 'stall',
+    x: 88,
+    y: 58,
+    iconName: 'beer',
+    description: 'Restricted 21+ adult beverage garden, serving liquor and premium hops.',
+    notes: 'Security checked entrance. Wristbands compulsory before purchase.',
+    capacity: '120 Patrons max',
+    powerLoad: '12kW Stable',
+    resources: [
+      { id: 'res_bg_1', name: 'High-top Beer Tables', quantity: 6 },
+      { id: 'res_bg_2', name: 'Draught Beer Chilled Coolers', quantity: 2 },
+      { id: 'res_bg_3', name: 'Safety Guard Rails', quantity: 15 }
+    ]
+  },
+  {
+    id: 'm_security_command',
+    title: 'Main Security Command',
+    category: 'health_and_security',
+    x: 35,
+    y: 84,
+    iconName: 'security',
+    description: 'Central operations hub for SLAF guards and event security managers.',
+    notes: 'Receives radio updates from across the Grounds; directs field responses.',
+    capacity: '8 Officers max',
+    powerLoad: '4kW UPS Core',
+    resources: [
+      { id: 'res_sc_1', name: 'VHF Handheld Radios', quantity: 15 },
+      { id: 'res_sc_2', name: 'Operations Map Table Board', quantity: 1 },
+      { id: 'res_sc_3', name: 'High-intensity Spotlights', quantity: 2 }
+    ]
+  },
+  {
+    id: 'm_police_checkpoint',
+    title: 'Police Support Outpost',
+    category: 'health_and_security',
+    x: 65,
+    y: 84,
+    iconName: 'security',
+    description: 'Civil security liaison command, assisting with perimeter checks and traffic regulations.',
+    notes: 'Handles public order and external road traffic flows.',
+    capacity: '6 Police Officers',
+    powerLoad: '2kW Standard',
+    resources: [
+      { id: 'res_pc_1', name: 'Traffic Guidance Batons', quantity: 4 },
+      { id: 'res_pc_2', name: 'Metal Detector Wands', quantity: 4 }
+    ]
+  },
+  {
+    id: 'm_first_aid',
+    title: 'First Aid & Ambulance Bay',
+    category: 'health_and_security',
+    x: 88,
+    y: 75,
+    iconName: 'security',
+    description: 'Fully-equipped medical tent with live standby paramedics and active SLAF Ambulance.',
+    notes: 'Direct escape route available through Logistical Support Gate in case of emergency transfers.',
+    capacity: '12 Emergency victims',
+    powerLoad: '5kW Generator UPS',
+    resources: [
+      { id: 'res_fa_1', name: 'Emergency Beds & Stretchers', quantity: 3 },
+      { id: 'res_fa_2', name: 'Oxygen Cylinders & Masks', quantity: 2 },
+      { id: 'res_fa_3', name: 'First Aid Medical Kit Boxes', quantity: 4 },
+      { id: 'res_fa_4', name: 'Standby Medical Ambulance', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_vip_washrooms',
+    title: 'VIP Restrooms',
+    category: 'hospitality',
+    x: 14,
+    y: 12,
+    iconName: 'washroom',
+    description: 'State-of-the-art premium washrooms configured with continuous water and sanitization supplies.',
+    notes: 'Located adjacent to the VIP Green Room. Checked regularly for cleanliness.',
+    capacity: '5 Stations max',
+    powerLoad: '3kW Standard',
+    resources: [
+      { id: 'res_vw_1', name: 'Running Water Tank (1000L)', quantity: 1 },
+      { id: 'res_vw_2', name: 'Hand Wash Soap Dispensers', quantity: 4 },
+      { id: 'res_vw_3', name: 'Exhaust Fan Ventilators', quantity: 2 }
+    ]
+  },
+  {
+    id: 'm_gen_washrooms_a',
+    title: 'General Washrooms (Left Wing)',
+    category: 'hospitality',
+    x: 8,
+    y: 72,
+    iconName: 'washroom',
+    description: 'Multi-cubicle general public restrooms situated in the left perimeter zone.',
+    notes: 'Dedicated waste pipelines connected securely.',
+    capacity: '12 cubicles',
+    powerLoad: '4kW Standard',
+    resources: [
+      { id: 'res_gwa_1', name: 'Water Tank Tower', quantity: 1 },
+      { id: 'res_gwa_2', name: 'Towel & Tissue Dispensers', quantity: 6 }
+    ]
+  },
+  {
+    id: 'm_gen_washrooms_b',
+    title: 'General Washrooms (Right Wing)',
+    category: 'hospitality',
+    x: 92,
+    y: 72,
+    iconName: 'washroom',
+    description: 'Multi-cubicle general public restrooms situated in the right perimeter zone.',
+    notes: 'Fully lit up for evening convenience.',
+    capacity: '12 cubicles',
+    powerLoad: '4kW Standard',
+    resources: [
+      { id: 'res_gwb_1', name: 'Water Tank Tower', quantity: 1 },
+      { id: 'res_gwb_2', name: 'Towel & Tissue Dispensers', quantity: 6 }
+    ]
+  },
+  {
+    id: 'm_crew_catering',
+    title: 'Crew Dining Hall',
+    category: 'hospitality',
+    x: 82,
+    y: 22,
+    iconName: 'vip',
+    description: 'Dedicated dining hall and buffet point for event workers, dancers, and security forces.',
+    notes: 'Catering meals served in batches. Open 11:00 AM to 11:30 PM.',
+    capacity: '80 seats concurrently',
+    powerLoad: '12kW Food warmers',
+    resources: [
+      { id: 'res_cc_1', name: 'Buffet Warmers', quantity: 4 },
+      { id: 'res_cc_2', name: 'Large Wooden Benches', quantity: 12 },
+      { id: 'res_cc_3', name: 'Industrial Drinking Water Coolers', quantity: 2 }
+    ]
+  },
+  {
+    id: 'm_led_backdrop',
+    title: 'LED Screen Setup',
+    category: 'production',
+    x: 50,
+    y: 9,
+    iconName: 'tv',
+    description: 'Huge scenic LED background panel delivering dynamic backdrops and artist custom visuals.',
+    notes: 'Rigged to structural heavy trusses.',
+    capacity: 'Visual technicians only',
+    powerLoad: '90kW Stable',
+    resources: [
+      { id: 'res_led_1', name: 'P3 Outdoor LED Modules', quantity: 280 },
+      { id: 'res_led_2', name: 'LED Video Processor Engine', quantity: 2 }
+    ]
+  },
+  {
+    id: 'm_delay_left',
+    title: 'Audio Delay Tower - Left',
+    category: 'production',
+    x: 32,
+    y: 52,
+    iconName: 'music',
+    description: 'Supplementary sound amplification tower positioned on the left side of the audience belt to correct acoustic travel.',
+    notes: 'Delay time configured to 42 milliseconds.',
+    capacity: 'N/A Standalone',
+    powerLoad: '15kW Stable',
+    resources: [
+      { id: 'res_dl_1', name: 'Dual 12-inch Line Array Elements', quantity: 4 },
+      { id: 'res_dl_2', name: 'Power Amplifiers Cabinet', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_delay_right',
+    title: 'Audio Delay Tower - Right',
+    category: 'production',
+    x: 68,
+    y: 52,
+    iconName: 'music',
+    description: 'Supplementary sound amplification tower positioned on the right side of the audience belt to correct acoustic travel.',
+    notes: 'Delay time configured to 42 milliseconds.',
+    capacity: 'N/A Standalone',
+    powerLoad: '15kW Stable',
+    resources: [
+      { id: 'res_dr_1', name: 'Dual 12-inch Line Array Elements', quantity: 4 },
+      { id: 'res_dr_2', name: 'Power Amplifiers Cabinet', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_instrument_storage',
+    title: 'Instrument Vault Room',
+    category: 'hospitality',
+    x: 32,
+    y: 22,
+    iconName: 'vip',
+    description: 'Highly secure climatized container room storing artist guitars, drums, keyboards, and acoustic kits.',
+    notes: 'Requires dual-custody access (crew chief + band lead).',
+    capacity: 'Strict secure vault',
+    powerLoad: '5kW AC unit',
+    resources: [
+      { id: 'res_iv_1', name: 'Air Dehumidifier Machine', quantity: 1 },
+      { id: 'res_iv_2', name: 'Heavy Instrument Flight Cases', quantity: 10 }
+    ]
+  },
+  {
+    id: 'm_media_press',
+    title: 'Media & Press Lounge',
+    category: 'hospitality',
+    x: 20,
+    y: 32,
+    iconName: 'vip',
+    description: 'Designated media lounge for journalists, interview sessions, and event live stream operators.',
+    notes: 'Equipped with dedicated fiber line internet access points.',
+    capacity: '30 Journalists',
+    powerLoad: '10kW Stable internet',
+    resources: [
+      { id: 'res_mp_1', name: 'Fiber Optic Router Point', quantity: 1 },
+      { id: 'res_mp_2', name: 'Interview Branding Press Backdrop', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_vip_lounge',
+    title: 'VIP Seating Lounge',
+    category: 'hospitality',
+    x: 28,
+    y: 38,
+    iconName: 'vip',
+    description: 'Elevated premium spectator section with comfortable seating, exclusive amenities, and pristine stage visibility.',
+    notes: 'Restricted access via active VIP ticket validator gate.',
+    capacity: '150 VIP Patrons',
+    powerLoad: '4kW Ambient lights',
+    resources: [
+      { id: 'res_vl_1', name: 'Luxury Cushioned Chairs', quantity: 80 },
+      { id: 'res_vl_2', name: 'Premium Coffee Tables', quantity: 10 }
+    ]
+  },
+  {
+    id: 'm_backstage_gate',
+    title: 'Backstage Security Gate',
+    category: 'access',
+    x: 38,
+    y: 12,
+    iconName: 'entrance',
+    description: 'Access checkpoint dividing Backstage Production belt from spectator audience zone.',
+    notes: 'Guarded continuously by military staff.',
+    capacity: 'Credential scanning ONLY',
+    powerLoad: '2kW Standby',
+    resources: [
+      { id: 'res_bsg_1', name: 'ID Credential scanners', quantity: 2 },
+      { id: 'res_bsg_2', name: 'Double Metal Barrier Gates', quantity: 1 }
     ]
   }
 ];
@@ -200,97 +602,221 @@ export const getZoneStatus = (x: number, y: number, category: string) => {
 };
 
 export const EventMapTab: React.FC = () => {
-  const [markers, setMarkers] = useState<MapMarker[]>(() => {
+  const [markers, setMarkersRaw] = useState<MapMarker[]>(() => {
     const saved = localStorage.getItem('chakra_event_layout_markers_v4');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as MapMarker[];
-        if (parsed && parsed.length > 0) {
-          return parsed.map(m => {
-            if (!m.resources || m.resources.length === 0) {
-              return {
-                ...m,
-                resources: [
-                  { id: 'res_df_cnp_' + m.id, name: 'Canopy 10x10', quantity: 1 },
-                  { id: 'res_df_tbl_' + m.id, name: 'Table', quantity: 1 },
-                  { id: 'res_df_chr_' + m.id, name: 'Chairs', quantity: 2 },
-                  { id: 'res_df_led_' + m.id, name: 'LED Bulb', quantity: 1 },
-                  { id: 'res_df_s13_' + m.id, name: '13A Power Socket', quantity: 1 },
-                  { id: 'res_df_s15_' + m.id, name: '15A Power Socket', quantity: 1 }
-                ]
-              };
-            }
-            return m;
-          });
-        }
-      } catch (_) {
-        // Fallback
-      }
-    }
-    
-    // Check if there are statically synced elements from the active GitHub repo
-    if (savedMarkers && savedMarkers.length > 0) {
-      return (savedMarkers as MapMarker[]).map(m => {
-        if (!m.resources || m.resources.length === 0) {
-          return {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((m: MapMarker) => ({
             ...m,
-            resources: [
-              { id: 'res_df_cnp_' + m.id, name: 'Canopy 10x10', quantity: 1 },
-              { id: 'res_df_tbl_' + m.id, name: 'Table', quantity: 1 },
-              { id: 'res_df_chr_' + m.id, name: 'Chairs', quantity: 2 },
-              { id: 'res_df_led_' + m.id, name: 'LED Bulb', quantity: 1 },
-              { id: 'res_df_s13_' + m.id, name: '13A Power Socket', quantity: 1 },
-              { id: 'res_df_s15_' + m.id, name: '15A Power Socket', quantity: 1 }
-            ]
-          };
+            resources: m.resources ? m.resources.filter(r => !r.id.startsWith('res_df_')) : []
+          }));
         }
-        return m;
-      });
+      } catch (_) {}
     }
-
-    return INITIAL_MARKERS.map(m => {
-      const defaultRes = [
-        { id: 'res_df_cnp_' + m.id, name: 'Canopy 10x10', quantity: 1 },
-        { id: 'res_df_tbl_' + m.id, name: 'Table', quantity: 1 },
-        { id: 'res_df_chr_' + m.id, name: 'Chairs', quantity: 2 },
-        { id: 'res_df_led_' + m.id, name: 'LED Bulb', quantity: 1 },
-        { id: 'res_df_s13_' + m.id, name: '13A Power Socket', quantity: 1 },
-        { id: 'res_df_s15_' + m.id, name: '15A Power Socket', quantity: 1 }
-      ];
-      const list = m.resources ? [...m.resources] : [];
-      defaultRes.forEach(def => {
-        if (!list.some(r => r.name.toLowerCase() === def.name.toLowerCase())) {
-          list.push(def);
-        }
-      });
-      return {
-        ...m,
-        resources: list
-      };
-    });
+    return INITIAL_MARKERS;
   });
 
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [activeMarkerId, setActiveMarkerId] = useState<string | null>('m_stage_setup');
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Custom categories state for future categories addition
-  const [customCategories, setCustomCategories] = useState<string[]>(() => {
+  const [customCategories, setCustomCategoriesRaw] = useState<string[]>(() => {
     const saved = localStorage.getItem('chakra_event_custom_categories_v4');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.length > 0) return parsed;
-      } catch (_) {
-        // Fallback
-      }
-    }
-    // Check if there are statically synced custom categories from the active GitHub repo
-    if (savedCategories && savedCategories.length > 0) {
-      return savedCategories as string[];
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (_) {}
     }
     return [];
   });
+
+  const setMarkers = (updater: MapMarker[] | ((prev: MapMarker[]) => MapMarker[])) => {
+    const nextMarkers = typeof updater === 'function' ? updater(markers) : updater;
+    setMarkersRaw(nextMarkers);
+    localStorage.setItem('chakra_event_layout_markers_v4', JSON.stringify(nextMarkers));
+    
+    // Dispatch event to notify layout modifications
+    window.dispatchEvent(new Event('chakra_map_data_changed'));
+
+    const sync = async () => {
+      const oldIds = new Set(markers.map(m => m.id));
+      const newIds = new Set(nextMarkers.map(m => m.id));
+
+      // Deleted
+      for (const id of oldIds) {
+        if (!newIds.has(id)) {
+          try {
+            await deleteDoc(doc(db, 'map_markers', id));
+          } catch (err) {
+            console.error("Failed to delete marker from Firestore:", err);
+          }
+        }
+      }
+
+      // New or Modified
+      for (const m of nextMarkers) {
+        const oldVal = markers.find(o => o.id === m.id);
+        if (!oldVal || JSON.stringify(oldVal) !== JSON.stringify(m)) {
+          try {
+            await setDoc(doc(db, 'map_markers', m.id), m);
+          } catch (err) {
+            console.error("Failed to update marker in Firestore:", err);
+          }
+        }
+      }
+    };
+    sync();
+  };
+
+  const setCustomCategories = (updater: string[] | ((prev: string[]) => string[])) => {
+    const nextCats = typeof updater === 'function' ? updater(customCategories) : updater;
+    setCustomCategoriesRaw(nextCats);
+    localStorage.setItem('chakra_event_custom_categories_v4', JSON.stringify(nextCats));
+
+    const sync = async () => {
+      const oldSet = new Set(customCategories);
+      const newSet = new Set(nextCats);
+
+      for (const cat of oldSet) {
+        if (!newSet.has(cat)) {
+          try {
+            await deleteDoc(doc(db, 'map_categories', cat));
+          } catch (err) {
+            console.error("Failed to delete category from Firestore:", err);
+          }
+        }
+      }
+
+      for (const cat of newSet) {
+        if (!oldSet.has(cat)) {
+          try {
+            await setDoc(doc(db, 'map_categories', cat), {});
+          } catch (err) {
+            console.error("Failed to add category to Firestore:", err);
+          }
+        }
+      }
+    };
+    sync();
+  };
+
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>('m_stage_setup');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Real-time synchronization unconditionally
+  useEffect(() => {
+    const unsubMarkers = onSnapshot(collection(db, 'map_markers'), (snapshot) => {
+      const list: MapMarker[] = [];
+      snapshot.forEach(doc => {
+        const data = doc.data() as MapMarker;
+        list.push({
+          ...data,
+          resources: data.resources ? data.resources.filter(r => !r.id.startsWith('res_df_')) : []
+        });
+      });
+      if (list.length > 0) {
+        setMarkersRaw(list);
+        localStorage.setItem('chakra_event_layout_markers_v4', JSON.stringify(list));
+      }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, 'map_markers');
+    });
+
+    const unsubCats = onSnapshot(collection(db, 'map_categories'), (snapshot) => {
+      const list: string[] = [];
+      snapshot.forEach(doc => {
+        list.push(doc.id);
+      });
+      const uniqueCats = Array.from(new Set(list)).filter(Boolean);
+      if (uniqueCats.length > 0) {
+        setCustomCategoriesRaw(uniqueCats);
+        localStorage.setItem('chakra_event_custom_categories_v4', JSON.stringify(uniqueCats));
+      }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, 'map_categories');
+    });
+
+    const seedMapDataIfEmpty = async () => {
+      try {
+        let markerSnap;
+        try {
+          markerSnap = await getDocs(collection(db, 'map_markers'));
+        } catch (err) {
+          handleFirestoreError(err, OperationType.LIST, 'map_markers');
+          return;
+        }
+
+        if (markerSnap.empty) {
+          // Sync with local fallback / INITIAL_MARKERS
+          let initialData: MapMarker[] = [];
+          if (markers.length > 0) {
+            initialData = markers;
+          } else {
+            const saved = localStorage.getItem('chakra_event_layout_markers_v4');
+            if (saved) {
+              try {
+                initialData = JSON.parse(saved);
+              } catch (_) {}
+            }
+          }
+          if (!initialData || initialData.length === 0) {
+            initialData = INITIAL_MARKERS;
+          }
+
+          const defaultMarkers = initialData.map(m => ({
+            ...m,
+            resources: m.resources ? m.resources.filter(r => !r.id.startsWith('res_df_')) : []
+          }));
+
+          for (const m of defaultMarkers) {
+            try {
+              await setDoc(doc(db, 'map_markers', m.id), m);
+            } catch (err) {
+              handleFirestoreError(err, OperationType.WRITE, `map_markers/${m.id}`);
+            }
+          }
+        }
+
+        let catSnap;
+        try {
+          catSnap = await getDocs(collection(db, 'map_categories'));
+        } catch (err) {
+          handleFirestoreError(err, OperationType.LIST, 'map_categories');
+          return;
+        }
+
+        if (catSnap.empty) {
+          let initialCats: string[] = [];
+          if (customCategories.length > 0) {
+            initialCats = customCategories;
+          } else {
+            const savedCats = localStorage.getItem('chakra_event_custom_categories_v4');
+            if (savedCats) {
+              try {
+                initialCats = JSON.parse(savedCats);
+              } catch (_) {}
+            }
+          }
+
+          for (const cat of initialCats) {
+            try {
+              await setDoc(doc(db, 'map_categories', cat), {});
+            } catch (err) {
+              handleFirestoreError(err, OperationType.WRITE, `map_categories/${cat}`);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to seed layout map data:", err);
+      }
+    };
+    seedMapDataIfEmpty();
+
+    return () => {
+      unsubMarkers();
+      unsubCats();
+    };
+  }, []);
 
   useEffect(() => {
     const fetchGitDataOnMount = async () => {

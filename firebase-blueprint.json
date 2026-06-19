@@ -39,6 +39,44 @@
         "createdAt": { "type": "number" }
       },
       "required": ["id", "text", "completed", "date"]
+    },
+    "MapMarker": {
+      "title": "MapMarker",
+      "description": "An interactive coordinate stall or performance anchor on the layout map",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "iconName": { "type": "string" },
+        "description": { "type": "string" },
+        "notes": { "type": "string" },
+        "capacity": { "type": "string" },
+        "powerLoad": { "type": "string" },
+        "resources": { "type": "array" }
+      },
+      "required": ["id", "title", "category", "x", "y", "iconName", "description"]
+    },
+    "MapCategory": {
+      "title": "MapCategory",
+      "description": "A custom layout category added by the planner",
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "RequirementCategory": {
+      "title": "RequirementCategory",
+      "description": "A category grouping specific physical equipment or logistics requests",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "items": { "type": "array" },
+        "isCustom": { "type": "boolean" }
+      },
+      "required": ["id", "name", "items"]
     }
   },
   "firestore": {
@@ -53,6 +91,18 @@
     "/general_tasks/{taskId}": {
       "schema": "GeneralTask",
       "description": "Collection of production general todo items"
+    },
+    "/map_markers/{markerId}": {
+      "schema": "MapMarker",
+      "description": "Collection of layout markers"
+    },
+    "/map_categories/{catId}": {
+      "schema": "MapCategory",
+      "description": "Collection of planner custom category records"
+    },
+    "/event_requirements/{reqId}": {
+      "schema": "RequirementCategory",
+      "description": "Collection of event logistics and material requirement categories"
     }
   }
 }

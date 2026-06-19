@@ -128,6 +128,20 @@ async function testConnection() {
 
 testConnection();
 
+export async function checkDbOnline(): Promise<boolean> {
+  try {
+    const testDocRef = doc(db, 'categories', 'connection_ping_test');
+    await getDocFromServer(testDocRef);
+    return true;
+  } catch (error: any) {
+    const msg = error?.message?.toLowerCase() || "";
+    if (msg.includes('offline') || msg.includes('unavailable') || error?.code === 'unavailable') {
+      return false;
+    }
+    return true;
+  }
+}
+
 // Authentication Helpers
 export async function loginWithGoogle() {
   try {
