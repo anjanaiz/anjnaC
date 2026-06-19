@@ -59,11 +59,11 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') {
-          // If the old repository 'anjnaC' is still stored, migrate/replace it with the new repository 'Chakra'
-          if (parsed.repoName === 'anjnaC') {
+          // Sync to GitHub anjanaiz/anjnaC, not anjanaiz/Chakra. Move existing 'Chakra' configurations over to 'anjnaC'
+          if (parsed.repoName === 'Chakra') {
             const migrated = {
               owner: 'anjanaiz',
-              repoName: 'Chakra',
+              repoName: 'anjnaC',
               branch: 'main',
               connected: true
             };
@@ -76,10 +76,10 @@ export default function App() {
         console.error('Failed to parse github repo config', e);
       }
     }
-    // Default to the user's new configured repo as requested
+    // Default to the user's specifically configured repo: anjnaC
     const defaultRepo = {
       owner: 'anjanaiz',
-      repoName: 'Chakra',
+      repoName: 'anjnaC',
       branch: 'main',
       connected: true
     };
@@ -88,7 +88,7 @@ export default function App() {
   });
 
   const [repoOwnerInput, setRepoOwnerInput] = useState('anjanaiz');
-  const [repoNameInput, setRepoNameInput] = useState('Chakra');
+  const [repoNameInput, setRepoNameInput] = useState('anjnaC');
   const [repoBranchInput, setRepoBranchInput] = useState('main');
   const [isConfiguringRepo, setIsConfiguringRepo] = useState(false);
 
@@ -200,7 +200,7 @@ export default function App() {
   const handleConnectGithub = async (owner: string, name: string, branch: string) => {
     const newRepo = {
       owner: owner.trim() || 'anjanaiz',
-      repoName: name.trim() || 'Chakra',
+      repoName: name.trim() || 'anjnaC',
       branch: branch.trim() || 'main',
       connected: true
     };
@@ -830,7 +830,7 @@ export default function App() {
                           type="text"
                           value={repoNameInput}
                           onChange={(e) => setRepoNameInput(e.target.value)}
-                          placeholder="e.g. Chakra"
+                          placeholder="e.g. anjnaC"
                           className="w-full bg-black/40 border border-white/10 rounded-lg text-white text-[10px] px-2 py-1.5 focus:outline-none focus:border-[#FF6B00] font-mono"
                         />
                       </div>
