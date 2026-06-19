@@ -35,7 +35,7 @@ import {
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType } from './firebase';
 import { TaskPlannerTab } from './components/TaskPlannerTab';
-import chakraLogo from './assets/images/chakra_logo.png';
+import { chakraLogoBase64 as chakraLogo } from './assets/images/logoBase64';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'shoot' | 'timeline' | 'map' | 'requirements' | 'tasks'>('shoot');
@@ -481,7 +481,7 @@ export default function App() {
               src={chakraLogo} 
               onError={(e) => {
                 e.currentTarget.onerror = null;
-                e.currentTarget.src = './chakra_logo.png';
+                e.currentTarget.src = '/chakra_logo.png';
               }}
               alt="Chakra 360 Logo" 
               className="h-11 w-11 object-contain select-none shrink-0 filter drop-shadow-[0_0_12px_rgba(255,107,0,0.5)]" 
@@ -910,7 +910,7 @@ export default function App() {
             src={chakraLogo} 
             onError={(e) => {
               e.currentTarget.onerror = null;
-              e.currentTarget.src = './chakra_logo.png';
+              e.currentTarget.src = '/chakra_logo.png';
             }}
             alt="Chakra 360 Logo" 
             className="h-9 w-9 object-contain select-none shrink-0 filter drop-shadow-[0_0_10px_rgba(255,107,0,0.4)]" 

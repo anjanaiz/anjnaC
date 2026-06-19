@@ -3,12 +3,12 @@
   "name": "Chakra 360 Live Event Production Dashboard",
   "icons": [
     {
-      "src": "./chakra_logo.png",
+      "src": "/chakra_logo.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "./chakra_logo.png",
+      "src": "/chakra_logo.png",
       "type": "image/png",
       "sizes": "512x512"
     }
