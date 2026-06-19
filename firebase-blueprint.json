@@ -26,6 +26,19 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["date", "status", "tasks"]
+    },
+    "GeneralTask": {
+      "title": "GeneralTask",
+      "description": "A general custom task in the production checklist with status and due date",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "date": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "text", "completed", "date"]
     }
   },
   "firestore": {
@@ -36,6 +49,10 @@
     "/timeline/{dayId}": {
       "schema": "TimelineDay",
       "description": "Collection of timeline schedule days"
+    },
+    "/general_tasks/{taskId}": {
+      "schema": "GeneralTask",
+      "description": "Collection of production general todo items"
     }
   }
 }
