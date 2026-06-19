@@ -30,7 +30,9 @@ import {
   GitBranch,
   Github,
   XCircle,
-  History
+  History,
+  Download,
+  Upload
 } from 'lucide-react';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType } from './firebase';
@@ -212,6 +214,77 @@ export default function App() {
     setTimeout(() => {
       syncLayoutToGitHub("init: establish repository connection & seed map elements");
     }, 100);
+  };
+
+  // Export all application data as backup JSON
+  const handleExportAllData = () => {
+    try {
+      const dataToBackup = {
+        markers: JSON.parse(localStorage.getItem('chakra_event_layout_markers_v4') || '[]'),
+        customCategories: JSON.parse(localStorage.getItem('chakra_event_custom_categories_v4') || '[]'),
+        categories: JSON.parse(localStorage.getItem('chakra_cats') || '[]'),
+        timeline: JSON.parse(localStorage.getItem('chakra_timeline') || '[]'),
+        eventRequirements: JSON.parse(localStorage.getItem('chakra_event_requirements') || '[]'),
+        generalTasks: JSON.parse(localStorage.getItem('chakra_general_tasks') || '[]')
+      };
+
+      const jsonString = JSON.stringify(dataToBackup, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const href = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = href;
+      downloadAnchor.download = "chakra360_data_backup.json";
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      document.body.removeChild(downloadAnchor);
+      URL.revokeObjectURL(href);
+    } catch (err: any) {
+      console.error("Failed to export backup data", err);
+      alert("Error exporting local storage data: " + err.message);
+    }
+  };
+
+  // Import application data back into LocalStorage and reload
+  const handleImportAllData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    fileReader.onload = (event) => {
+      try {
+        const parsedData = JSON.parse(event.target?.result as string);
+        if (!parsedData || typeof parsedData !== 'object') {
+          throw new Error("Invalid backup file format: data is not a valid JSON object");
+        }
+
+        // Restore keys
+        if (parsedData.markers) {
+          localStorage.setItem('chakra_event_layout_markers_v4', JSON.stringify(parsedData.markers));
+        }
+        if (parsedData.customCategories) {
+          localStorage.setItem('chakra_event_custom_categories_v4', JSON.stringify(parsedData.customCategories));
+        }
+        if (parsedData.categories) {
+          localStorage.setItem('chakra_cats', JSON.stringify(parsedData.categories));
+        }
+        if (parsedData.timeline) {
+          localStorage.setItem('chakra_timeline', JSON.stringify(parsedData.timeline));
+        }
+        if (parsedData.eventRequirements) {
+          localStorage.setItem('chakra_event_requirements', JSON.stringify(parsedData.eventRequirements));
+        }
+        if (parsedData.generalTasks) {
+          localStorage.setItem('chakra_general_tasks', JSON.stringify(parsedData.generalTasks));
+        }
+
+        alert("Data successfully imported! The application will now reload to apply all event configurations.");
+        window.location.reload();
+      } catch (err: any) {
+        console.error("Failed to import data", err);
+        alert("Import failed: " + err.message + ". Please ensure you uploaded a valid backup JSON file (e.g., chakra360_data_backup.json).");
+      }
+    };
+    fileReader.readAsText(files[0]);
   };
 
   // Read current date from metadata config / prompt
@@ -864,6 +937,55 @@ export default function App() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Vercel Deployment & Migration Card */}
+            <div className="pt-4 border-t border-white/5 mt-4">
+              <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3" id="vercel-migration-section">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] uppercase text-white/40 font-mono tracking-wider font-semibold flex items-center gap-1.5">
+                    <Download size={10} className="text-[#FF6B00]" /> Vercel Migration
+                  </span>
+                  <span className="text-[7.5px] font-mono text-zinc-400 bg-white/5 px-1 py-0.5 rounded">
+                    Data Sync
+                  </span>
+                </div>
+                
+                <p className="text-[9px] text-white/40 leading-relaxed font-mono">
+                  Origin domain limits prevent local storage from transferring to Vercel automatically. Use this migration kit to export your current layout and import it on Vercel instantly.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    onClick={handleExportAllData}
+                    className="flex items-center justify-center gap-1 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[9px] font-mono text-white/80 transition cursor-pointer font-medium uppercase tracking-wider"
+                    id="export-dashboard-btn"
+                    title="Download backup file"
+                  >
+                    <Download size={10} className="text-[#FF6B00]" />
+                    Export
+                  </button>
+
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleImportAllData}
+                      className="hidden"
+                      id="import-backup-file-input"
+                    />
+                    <button
+                      onClick={() => document.getElementById('import-backup-file-input')?.click()}
+                      className="w-full flex items-center justify-center gap-1 py-1.5 bg-[#FF6B00]/10 hover:bg-[#FF6B00]/25 border border-[#FF6B00]/25 rounded-lg text-[9px] font-mono text-[#FF6B00] font-bold transition cursor-pointer uppercase tracking-wider"
+                      id="import-dashboard-btn"
+                      title="Load backup file"
+                    >
+                      <Upload size={10} />
+                      Import
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
