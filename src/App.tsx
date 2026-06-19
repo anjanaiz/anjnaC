@@ -479,6 +479,10 @@ export default function App() {
           <div className="flex items-center gap-3.5">
             <img 
               src={chakraLogo} 
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = './chakra_logo.png';
+              }}
               alt="Chakra 360 Logo" 
               className="h-11 w-11 object-contain select-none shrink-0 filter drop-shadow-[0_0_12px_rgba(255,107,0,0.5)]" 
               referrerPolicy="no-referrer"
@@ -904,6 +908,10 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <img 
             src={chakraLogo} 
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = './chakra_logo.png';
+            }}
             alt="Chakra 360 Logo" 
             className="h-9 w-9 object-contain select-none shrink-0 filter drop-shadow-[0_0_10px_rgba(255,107,0,0.4)]" 
             referrerPolicy="no-referrer"
