@@ -35,6 +35,7 @@ import {
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType } from './firebase';
 import { TaskPlannerTab } from './components/TaskPlannerTab';
+import chakraLogo from './assets/images/chakra_logo.png';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'shoot' | 'timeline' | 'map' | 'requirements' | 'tasks'>('shoot');
@@ -477,7 +478,7 @@ export default function App() {
         <div className="space-y-8 flex-1 flex flex-col">
           <div className="flex items-center gap-3.5">
             <img 
-              src="/chakra_logo.png" 
+              src={chakraLogo} 
               alt="Chakra 360 Logo" 
               className="h-11 w-11 object-contain select-none shrink-0 filter drop-shadow-[0_0_12px_rgba(255,107,0,0.5)]" 
               referrerPolicy="no-referrer"
@@ -902,7 +903,7 @@ export default function App() {
       <header className="md:hidden sticky top-0 z-50 bg-[#0C0C0C]/95 border-b border-white/5 backdrop-blur-md flex items-center justify-between p-4 px-6" id="global-header">
         <div className="flex items-center gap-2.5">
           <img 
-            src="/chakra_logo.png" 
+            src={chakraLogo} 
             alt="Chakra 360 Logo" 
             className="h-9 w-9 object-contain select-none shrink-0 filter drop-shadow-[0_0_10px_rgba(255,107,0,0.4)]" 
             referrerPolicy="no-referrer"
