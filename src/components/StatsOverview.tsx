@@ -1,16 +1,16 @@
 import React from 'react';
-import { VideoItem, TimelineDay } from '../types';
-import { Film, CheckCircle2, Clock, Calendar, AlertCircle, Percent, Disc } from 'lucide-react';
+import { VideoItem, Stall } from '../types';
+import { Film, CheckCircle2, Clock, DollarSign, AlertCircle, Percent, Disc, Store } from 'lucide-react';
 
 interface StatsOverviewProps {
   categories: { id: string; name: string; items: VideoItem[] }[];
-  timeline: TimelineDay[];
+  stalls: Stall[];
   currentDateStr: string;
 }
 
 export const StatsOverview: React.FC<StatsOverviewProps> = ({
   categories,
-  timeline,
+  stalls,
   currentDateStr,
 }) => {
   // Page 01 stats (Content tracking)
@@ -21,42 +21,16 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
   const doneCount = allContentItems.filter((i) => i.status === 'DONE').length;
   const contentCompletionPercent = totalContent > 0 ? Math.round((doneCount / totalContent) * 100) : 0;
 
-  // Page 02 stats (Timeline)
-  const allTimelineTasks = timeline.flatMap((d) => d.tasks);
-  const totalTimelineTasksCount = allTimelineTasks.length;
-  const completedTimelineTasksCount = allTimelineTasks.filter((t) => t.status === 'Completed').length;
-  const overdueTimelineTasksCount = allTimelineTasks.filter((t) => {
-    // If date is before June 13, and task status is not completed, it is overdue
-    // Our fake year is 2026. Dates are formatted as "JUNE 12", "JUNE 13", etc.
-    const dayNum = parseInt(t.id.split('_')[1]?.replace(/[^0-9]/g, '') || '0') || parseInt(t.id.match(/\d+/)?.[0] || '0');
-    // Simple mock overdue check: June 13 is current day. Dates < 13 with status != Completed or Delayed are overdue.
-    // Let's check status directly. If day is less than 13 and status is Pending, it is overdue!
-    if (t.status === 'Pending') {
-      // Find what day this task belongs to
-      const parentDay = timeline.find((d) => d.tasks.some((task) => task.id === t.id));
-      if (parentDay) {
-        const dayInt = parseInt(parentDay.date.replace(/[^0-9]/g, ''));
-        return dayInt < 13;
-      }
-    }
-    return t.status === 'Delayed';
-  }).length;
+  // Stall stats for dashboard widget
+  const totalStalls = stalls.length;
+  const assignedStalls = stalls.filter((s) => s.vendorName.trim().length > 0).length;
+  const fullyPaidStalls = stalls.filter((s) => s.advancePayment > 0 && s.remainingBalance === 0).length;
+  const totalOutstanding = stalls.reduce((sum, s) => sum + s.remainingBalance, 0);
+  const totalAdvances = stalls.reduce((sum, s) => sum + s.advancePayment, 0);
 
-  const timelineCompletionPercent = totalTimelineTasksCount > 0
-    ? Math.round((completedTimelineTasksCount / totalTimelineTasksCount) * 100)
+  const paymentCompletionPercent = totalStalls > 0
+    ? Math.round((fullyPaidStalls / totalStalls) * 100)
     : 0;
-
-  // Active today's day & tasks
-  const todayDay = timeline.find((d) => d.date === currentDateStr);
-  const todayTasksCount = todayDay ? todayDay.tasks.length : 0;
-  const upcomingTasksCount = allTimelineTasks.filter((t) => {
-    const parentDay = timeline.find((d) => d.tasks.some((task) => task.id === t.id));
-    if (parentDay) {
-      const dayInt = parseInt(parentDay.date.replace(/[^0-9]/g, ''));
-      return dayInt > 13 && t.status === 'Pending';
-    }
-    return false;
-  }).length;
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4" id="stats-container">
@@ -131,45 +105,39 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
         </div>
       </div>
 
-      {/* Timeline Status */}
+      {/* Stall Ledger / Payment status */}
       <div id="stat-timeline" className="bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm hover:border-white/20 transition-all duration-300">
         <div className="flex justify-between items-start">
           <div>
-            <span className="text-[10px] uppercase font-mono text-white/40 block mb-1">Time Progress</span>
-            <span className="text-2xl font-black font-display text-white">{timelineCompletionPercent}%</span>
+            <span className="text-[10px] uppercase font-mono text-white/40 block mb-1">Stalls Paid</span>
+            <span className="text-2xl font-black font-display text-white">{paymentCompletionPercent}%</span>
           </div>
           <div className="p-2 rounded-xl bg-white/5 border border-white/5 text-white/40">
-            <Calendar size={14} />
+            <Store size={14} />
           </div>
         </div>
         <div className="mt-2 text-[10px] font-mono text-white/60">
-          <span>{dueDateStatusLabel(overdueTimelineTasksCount)}</span>
+          <span>{fullyPaidStalls} of {totalStalls} fully paid</span>
         </div>
       </div>
 
-      {/* Tasks Overview Widget */}
+      {/* Stall Balance outstanding details */}
       <div id="stat-overdue" className="bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm hover:border-white/20 transition-all duration-300 col-span-2 md:col-span-1">
         <div className="flex justify-between items-start">
           <div>
-            <span className="text-[10px] uppercase font-mono text-white/40 block mb-1">Delay / Scheduled</span>
-            <span className="text-base font-black font-mono text-red-400">
-              {overdueTimelineTasksCount} <span className="text-white/20 text-xs">/</span> <span className="text-blue-400">{upcomingTasksCount}</span>
+            <span className="text-[10px] uppercase font-mono text-white/40 block mb-1">Pending Balance</span>
+            <span className="text-[11px] font-black font-mono text-rose-400">
+              Rs. {totalOutstanding.toLocaleString()}
             </span>
           </div>
-          <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+          <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
             <AlertCircle size={15} />
           </div>
         </div>
         <div className="mt-1 text-[9px] font-mono text-white/40 block">
-          Today: {todayTasksCount} assigned
+          Arrears in LKR accounts
         </div>
       </div>
     </div>
   );
 };
-
-function dueDateStatusLabel(overdueCount: number): string {
-  if (overdueCount === 0) return "Schedules on Track";
-  if (overdueCount === 1) return "1 Rescheduled Task";
-  return `${overdueCount} Delayed Tasks`;
-}

@@ -31,3 +31,16 @@ export interface TimelineDay {
   tasks: TimelineTask[];
   isEventDay?: boolean;
 }
+
+export interface Stall {
+  id: string;
+  name: string;
+  vendorName: string;
+  whatsappNumber: string;
+  advancePayment: number;
+  remainingBalance: number;
+  items: string[];
+  notes?: string;
+  createdAt?: number;
+}
+

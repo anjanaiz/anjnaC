@@ -27,6 +27,23 @@
       },
       "required": ["date", "status", "tasks"]
     },
+    "Stall": {
+      "title": "Stall",
+      "description": "An interactive coordinate stall or commercial food/beverage/merch anchor detailing vendor placements and payments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "advancePayment": { "type": "number" },
+        "remainingBalance": { "type": "number" },
+        "items": { "type": "array" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "name", "items"]
+    },
     "GeneralTask": {
       "title": "GeneralTask",
       "description": "A general custom task in the production checklist with status and due date",
@@ -83,6 +100,10 @@
     "/categories/{categoryId}": {
       "schema": "Category",
       "description": "Collection of shoot list video item categories"
+    },
+    "/stalls/{stallId}": {
+      "schema": "Stall",
+      "description": "Collection of commercial vendor stall items, payment records, and ledger values"
     },
     "/timeline/{dayId}": {
       "schema": "TimelineDay",

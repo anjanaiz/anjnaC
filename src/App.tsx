@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { INITIAL_CATEGORIES, INITIAL_TIMELINE } from './data';
-import { Category, TimelineDay } from './types';
+import { INITIAL_CATEGORIES } from './data';
+import { Category, Stall } from './types';
 import { StatsOverview } from './components/StatsOverview';
 import { ShootListTab } from './components/ShootListTab';
-import { TimelineTab } from './components/TimelineTab';
+import { StallDetailsTab } from './components/StallDetailsTab';
 import { EventMapTab } from './components/EventMapTab';
 import { EventRequirementsTab } from './components/EventRequirementsTab';
 import { 
@@ -32,7 +32,8 @@ import {
   XCircle,
   History,
   Download,
-  Upload
+  Upload,
+  Store
 } from 'lucide-react';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType, checkDbOnline } from './firebase';
@@ -40,7 +41,7 @@ import { TaskPlannerTab } from './components/TaskPlannerTab';
 import { chakraLogoBase64 as chakraLogo } from './assets/images/logoBase64';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'shoot' | 'timeline' | 'map' | 'requirements' | 'tasks'>('shoot');
+  const [activeTab, setActiveTab] = useState<'shoot' | 'stalls' | 'map' | 'requirements' | 'tasks'>('shoot');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Real-time Sync & Authentication States
@@ -78,7 +79,7 @@ export default function App() {
         markers: JSON.parse(localStorage.getItem('chakra_event_layout_markers_v4') || '[]'),
         customCategories: JSON.parse(localStorage.getItem('chakra_event_custom_categories_v4') || '[]'),
         categories: JSON.parse(localStorage.getItem('chakra_cats') || '[]'),
-        timeline: JSON.parse(localStorage.getItem('chakra_timeline') || '[]'),
+        stalls: JSON.parse(localStorage.getItem('chakra_stalls') || '[]'),
         eventRequirements: JSON.parse(localStorage.getItem('chakra_event_requirements') || '[]'),
         generalTasks: JSON.parse(localStorage.getItem('chakra_general_tasks') || '[]')
       };
@@ -122,8 +123,8 @@ export default function App() {
         if (parsedData.categories) {
           localStorage.setItem('chakra_cats', JSON.stringify(parsedData.categories));
         }
-        if (parsedData.timeline) {
-          localStorage.setItem('chakra_timeline', JSON.stringify(parsedData.timeline));
+        if (parsedData.stalls) {
+          localStorage.setItem('chakra_stalls', JSON.stringify(parsedData.stalls));
         }
         if (parsedData.eventRequirements) {
           localStorage.setItem('chakra_event_requirements', JSON.stringify(parsedData.eventRequirements));
@@ -158,13 +159,13 @@ export default function App() {
     return [];
   });
 
-  const [timeline, setTimeline] = useState<TimelineDay[]>(() => {
-    const saved = localStorage.getItem('chakra_timeline');
+  const [stalls, setStalls] = useState<Stall[]>(() => {
+    const saved = localStorage.getItem('chakra_stalls');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (e) {
-        console.error('Failed to parse timeline state', e);
+        console.error('Failed to parse stalls state', e);
       }
     }
     return [];
@@ -185,8 +186,8 @@ export default function App() {
   }, [categories]);
 
   useEffect(() => {
-    localStorage.setItem('chakra_timeline', JSON.stringify(timeline));
-  }, [timeline]);
+    localStorage.setItem('chakra_stalls', JSON.stringify(stalls));
+  }, [stalls]);
 
   // 3. Realtime listening to database updates
   useEffect(() => {
@@ -209,31 +210,27 @@ export default function App() {
       setCategories(list);
       setSyncStatus('synced');
     }, (err) => {
-      console.error("Firestore categories snapshot error", err);
+      handleFirestoreError(err, OperationType.GET, 'categories');
       setSyncStatus('error');
     });
 
-    // Live Subscribe: Timeline Days
-    const unsubscribeTimeline = onSnapshot(collection(db, 'timeline'), (snapshot) => {
-      const list: TimelineDay[] = [];
+    // Live Subscribe: Stalls
+    const unsubscribeStalls = onSnapshot(collection(db, 'stalls'), (snapshot) => {
+      const list: Stall[] = [];
       snapshot.forEach(doc => {
-        list.push(doc.data() as TimelineDay);
+        list.push(doc.data() as Stall);
       });
-      list.sort((a, b) => {
-        const idxA = INITIAL_TIMELINE.findIndex(d => d.date === a.date);
-        const idxB = INITIAL_TIMELINE.findIndex(d => d.date === b.date);
-        return idxA - idxB;
-      });
-      setTimeline(list);
+      list.sort((a, b) => a.name.localeCompare(b.name));
+      setStalls(list);
       setSyncStatus('synced');
     }, (err) => {
-      console.error("Firestore timeline snapshot error", err);
+      handleFirestoreError(err, OperationType.GET, 'stalls');
       setSyncStatus('error');
     });
 
     return () => {
       unsubscribeCats();
-      unsubscribeTimeline();
+      unsubscribeStalls();
     };
   }, []);
 
@@ -305,7 +302,7 @@ export default function App() {
 
   // Master Purge function to clean all data and databases completely
   const handlePurgeAllData = async () => {
-    if (!confirm("Are you absolutely sure you want to completely PURGE and delete ALL data from the live Firestore database and LocalStorage? This will wipe out all categories, timeline days, operational tasks, map markers, and requirements for a completely fresh start. This action is permanent!")) {
+    if (!confirm("Are you absolutely sure you want to completely PURGE and delete ALL data from the live Firestore database and LocalStorage? This will wipe out all categories, vendor stalls, operational tasks, map markers, and requirements for a completely fresh start. This action is permanent!")) {
       return;
     }
 
@@ -313,18 +310,18 @@ export default function App() {
     try {
       // Clear React states
       setCategories([]);
-      setTimeline([]);
+      setStalls([]);
 
       // Clear LocalStorage
       localStorage.removeItem('chakra_cats');
-      localStorage.removeItem('chakra_timeline');
+      localStorage.removeItem('chakra_stalls');
       localStorage.removeItem('chakra_event_layout_markers_v4');
       localStorage.removeItem('chakra_event_custom_categories_v4');
       localStorage.removeItem('chakra_event_requirements');
       localStorage.removeItem('chakra_general_tasks');
 
       // Delete doc records in Firestore of all collections
-      const collectionsToPurge = ['categories', 'timeline', 'general_tasks', 'map_markers', 'map_categories', 'event_requirements'];
+      const collectionsToPurge = ['categories', 'stalls', 'general_tasks', 'map_markers', 'map_categories', 'event_requirements'];
       for (const colName of collectionsToPurge) {
         const snap = await getDocs(collection(db, colName));
         for (const docItem of snap.docs) {
@@ -462,19 +459,19 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('timeline')}
+              onClick={() => setActiveTab('stalls')}
               className={`w-full flex items-center justify-between p-2.5 px-3.5 rounded-xl transition-all duration-300 font-display text-xs font-semibold cursor-pointer text-left ${
-                activeTab === 'timeline'
+                activeTab === 'stalls'
                   ? 'text-[#FF6B00] bg-[#FF6B00]/10 border border-[#FF6B00]/25'
                   : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Calendar size={14} className={activeTab === 'timeline' ? 'text-[#FF6B00]' : 'text-white/40'} />
-                <span>PRODUCTION TIMELINE</span>
+                <Store size={14} className={activeTab === 'stalls' ? 'text-[#FF6B00]' : 'text-white/40'} />
+                <span>STALL DETAILS</span>
               </div>
               <div className={`w-1.5 h-1.5 rounded-full ${
-                activeTab === 'timeline' 
+                activeTab === 'stalls' 
                   ? 'bg-[#FF6B00] shadow-[0_0_8px_#FF6B00]' 
                   : 'bg-white/20'
               }`} />
@@ -645,8 +642,8 @@ export default function App() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
-              if (activeTab === 'shoot') setActiveTab('timeline');
-              else if (activeTab === 'timeline') setActiveTab('map');
+              if (activeTab === 'shoot') setActiveTab('stalls');
+              else if (activeTab === 'stalls') setActiveTab('map');
               else if (activeTab === 'map') setActiveTab('requirements');
               else if (activeTab === 'requirements') setActiveTab('tasks');
               else setActiveTab('shoot');
@@ -654,8 +651,8 @@ export default function App() {
             className="px-3 py-1.5 rounded-lg border border-[#FF6B00]/20 bg-[#FF6B00]/10 text-[#FF6B00] text-[10px] font-mono font-bold uppercase transition"
           >
             {activeTab === 'shoot' 
-              ? 'To Timeline >' 
-              : activeTab === 'timeline' 
+              ? 'To Stalls >' 
+              : activeTab === 'stalls' 
                 ? 'To EVENT MAP >' 
                 : activeTab === 'map' 
                   ? 'To Requirements >' 
@@ -690,14 +687,14 @@ export default function App() {
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('timeline');
+                  setActiveTab('stalls');
                   setMobileMenuOpen(false);
                 }}
                 className={`p-2.5 rounded-lg text-center font-mono text-[10px] font-bold leading-none ${
-                  activeTab === 'timeline' ? 'bg-[#FF6B00] text-black font-black' : 'bg-white/5 text-white/70'
+                  activeTab === 'stalls' ? 'bg-[#FF6B00] text-black font-black' : 'bg-white/5 text-white/70'
                 }`}
               >
-                P02: PRODUCTION TIMELINE
+                P02: STALL DETAILS
               </button>
               <button
                 onClick={() => {
@@ -786,8 +783,8 @@ export default function App() {
             <h2 className="text-lg font-bold font-display tracking-tight text-white mt-0.5">
               {activeTab === 'shoot' 
                 ? 'SHOOT LIST & STATUS' 
-                : activeTab === 'timeline' 
-                  ? 'PRODUCTION TIMELINE SEQUENCE'
+                : activeTab === 'stalls' 
+                  ? 'STALL DETAILS MATRIX'
                   : activeTab === 'map'
                     ? 'EVENT MAP'
                     : activeTab === 'requirements'
@@ -808,10 +805,10 @@ export default function App() {
           
 
           {/* DYNAMIC GRID METRICS (REACTIVE WIDGETS) */}
-          {activeTab !== 'map' && activeTab !== 'requirements' && activeTab !== 'tasks' && (
+          {activeTab === 'shoot' && (
             <StatsOverview 
               categories={categories} 
-              timeline={timeline}
+              stalls={stalls}
               currentDateStr={CURRENT_DATE_STRING}
             />
           )}
@@ -823,12 +820,8 @@ export default function App() {
                 categories={categories} 
                 setCategories={handleSetCategories} 
               />
-            ) : activeTab === 'timeline' ? (
-              <TimelineTab 
-                timeline={timeline} 
-                setTimeline={handleSetTimeline} 
-                currentDateStr={CURRENT_DATE_STRING}
-              />
+            ) : activeTab === 'stalls' ? (
+              <StallDetailsTab />
             ) : activeTab === 'map' ? (
               <EventMapTab />
             ) : activeTab === 'requirements' ? (

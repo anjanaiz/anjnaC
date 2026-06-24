@@ -11,6 +11,10 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /stalls/{stallId} {
+      allow read, write: if true;
+    }
+
     match /general_tasks/{taskId} {
       allow read, write: if true;
     }
