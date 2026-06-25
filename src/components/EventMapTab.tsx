@@ -866,6 +866,128 @@ export const EventMapTab: React.FC = () => {
   const [editX, setEditX] = useState<number>(50);
   const [editY, setEditY] = useState<number>(50);
 
+  const [draggingMarkerId, setDraggingMarkerId] = useState<string | null>(null);
+  const isDraggingRef = useRef(false);
+
+  // Keyboard controls for fine-tuning
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!activeMarkerId) return;
+
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+      if (!arrowKeys.includes(e.key)) return;
+
+      e.preventDefault();
+
+      let diffX = 0;
+      let diffY = 0;
+      // Normal arrow moves by 1 unit, Shift+Arrow moves by 0.2 units for fine-tuning!
+      const step = e.shiftKey ? 0.2 : 1.0;
+
+      if (e.key === 'ArrowUp') diffY = -step;
+      if (e.key === 'ArrowDown') diffY = step;
+      if (e.key === 'ArrowLeft') diffX = -step;
+      if (e.key === 'ArrowRight') diffX = step;
+
+      setMarkers(prev =>
+        prev.map(m => {
+          if (m.id === activeMarkerId) {
+            let nextX = m.x + diffX;
+            let nextY = m.y + diffY;
+
+            nextX = Math.min(Math.max(nextX, 3), 97);
+            nextY = Math.min(Math.max(nextY, 3), 97);
+
+            nextX = Number(nextX.toFixed(1));
+            nextY = Number(nextY.toFixed(1));
+
+            // Also synchronize edit coordinates input fields if editing this marker
+            if (isEditingMarker) {
+              setEditX(nextX);
+              setEditY(nextY);
+            }
+
+            return { ...m, x: nextX, y: nextY };
+          }
+          return m;
+        })
+      );
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeMarkerId, isEditingMarker, setMarkers]);
+
+  // Mouse and touch drag handlers
+  useEffect(() => {
+    if (!draggingMarkerId) return;
+
+    const handleGlobalMove = (e: MouseEvent | TouchEvent) => {
+      if (!mapContainerRef.current) return;
+      isDraggingRef.current = true;
+
+      const rect = mapContainerRef.current.getBoundingClientRect();
+      const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+
+      let x = ((clientX - rect.left) / rect.width) * 100;
+      let y = ((clientY - rect.top) / rect.height) * 100;
+
+      x = Math.min(Math.max(x, 3), 97);
+      y = Math.min(Math.max(y, 3), 97);
+
+      x = Math.round(x);
+      y = Math.round(y);
+
+      setMarkersRaw(prev =>
+        prev.map(m => (m.id === draggingMarkerId ? { ...m, x, y } : m))
+      );
+    };
+
+    const handleGlobalUp = () => {
+      if (isDraggingRef.current) {
+        setMarkers(prev => {
+          const draggedMarker = prev.find(m => m.id === draggingMarkerId);
+          if (draggedMarker && activeMarkerId === draggingMarkerId) {
+            setEditX(draggedMarker.x);
+            setEditY(draggedMarker.y);
+          }
+          return [...prev]; // returns new reference to trigger Firestore sync
+        });
+
+        // Delay resetting isDraggingRef.current to false so button clicks are suppressed
+        setTimeout(() => {
+          isDraggingRef.current = false;
+        }, 50);
+      }
+
+      setDraggingMarkerId(null);
+    };
+
+    window.addEventListener('mousemove', handleGlobalMove);
+    window.addEventListener('mouseup', handleGlobalUp);
+    window.addEventListener('touchmove', handleGlobalMove, { passive: false });
+    window.addEventListener('touchend', handleGlobalUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMove);
+      window.removeEventListener('mouseup', handleGlobalUp);
+      window.removeEventListener('touchmove', handleGlobalMove);
+      window.removeEventListener('touchend', handleGlobalUp);
+    };
+  }, [draggingMarkerId, activeMarkerId, setMarkers]);
+
   // Custom iframe-safe dialog confirmation state replacing browser-native blockable dialogues
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -1063,6 +1185,7 @@ export const EventMapTab: React.FC = () => {
 
   // Capture user click directly onto map to position elements beautifully!
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDraggingRef.current) return;
     if (!mapContainerRef.current) return;
     const rect = mapContainerRef.current.getBoundingClientRect();
     const clickX = Math.round(((e.clientX - rect.left) / rect.width) * 100);
@@ -1707,17 +1830,38 @@ export const EventMapTab: React.FC = () => {
           {filteredMarkers.map(m => {
             const theme = getCategoryTheme(m.category);
             const isSelected = activeMarkerId === m.id;
+            const isDragged = draggingMarkerId === m.id;
             
             return (
               <button
                 key={m.id}
+                onMouseDown={(e) => {
+                  if (e.button !== 0) return; // Only drag with left click
+                  e.stopPropagation();
+                  setActiveMarkerId(m.id);
+                  setDraggingMarkerId(m.id);
+                  isDraggingRef.current = false;
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  setActiveMarkerId(m.id);
+                  setDraggingMarkerId(m.id);
+                  isDraggingRef.current = false;
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (isDraggingRef.current) return;
                   setActiveMarkerId(m.id);
                   setShowAddForm(false);
                   setIsEditingMarker(false);
                 }}
-                className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 focus:outline-none transition-all duration-300 z-10 hover:z-30"
+                className={`absolute transform -translate-x-1/2 -translate-y-1/2 focus:outline-none z-10 hover:z-30 select-none ${
+                  isDragged
+                    ? 'cursor-grabbing scale-110 z-50'
+                    : isSelected
+                    ? 'cursor-grab scale-105 z-30'
+                    : 'cursor-grab transition-all duration-300'
+                }`}
                 style={{ left: `${m.x}%`, top: `${m.y}%` }}
               >
                 {/* Visual marker container with custom category colors */}
@@ -1736,7 +1880,7 @@ export const EventMapTab: React.FC = () => {
                   {/* Core Icon Circular Badge - group/icon hover trigger to show tooltip ONLY on direct hover of this specific badge */}
                   <div className={`p-1.5 rounded-xl border shadow-2xl relative transition-all duration-300 group/icon ${
                     isSelected 
-                      ? 'bg-[#FF6B00] border-white scale-125 shadow-[0_0_15px_rgba(255,107,0,0.5)] text-black' 
+                      ? 'bg-[#FF6B00] border-white shadow-[0_0_15px_rgba(255,107,0,0.5)] text-black' 
                       : `bg-black/95 border-white/15 hover:border-white/50 text-white ${theme.bg}`
                   }`}>
                     {getMarkerIcon(m.iconName, m.category, m.title)}
@@ -1750,6 +1894,13 @@ export const EventMapTab: React.FC = () => {
                   {/* Tiny pulsing indicator */}
                   {isSelected && (
                     <span className="absolute -bottom-1 h-2 w-2 rounded-full bg-white border border-black shadow" />
+                  )}
+
+                  {/* Premium real-time dynamic coordinates overlay while active/dragged */}
+                  {(isDragged || isSelected) && (
+                    <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-black/95 text-[8px] text-[#FF6B00] font-mono font-bold px-1.5 py-0.5 rounded border border-[#FF6B00]/40 z-50 whitespace-nowrap shadow-lg shadow-black">
+                      X:{Math.round(m.x)} Y:{Math.round(m.y)}
+                    </div>
                   )}
                 </div>
 
