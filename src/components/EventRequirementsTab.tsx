@@ -91,6 +91,26 @@ const DEFAULT_REQUIREMENTS: RequirementCategory[] = [
   }
 ];
 
+const cleanUndefined = (obj: any): any => {
+  if (obj === null || obj === undefined) return null;
+  if (Array.isArray(obj)) {
+    return obj.map(cleanUndefined);
+  }
+  if (typeof obj === 'object') {
+    const cleaned: Record<string, any> = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const val = obj[key];
+        if (val !== undefined) {
+          cleaned[key] = cleanUndefined(val);
+        }
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+};
+
 export const EventRequirementsTab: React.FC = () => {
   // Load state or use fallback
   const [categories, setCategories] = useState<RequirementCategory[]>(() => {
@@ -174,7 +194,7 @@ export const EventRequirementsTab: React.FC = () => {
 
     setCategoryInput('');
     try {
-      await setDoc(doc(db, 'event_requirements', newCatObj.id), newCatObj);
+      await setDoc(doc(db, 'event_requirements', newCatObj.id), cleanUndefined(newCatObj));
     } catch (err) {
       console.error("Failed to add requirements category in Firestore:", err);
     }
@@ -224,7 +244,7 @@ export const EventRequirementsTab: React.FC = () => {
           ...targetCat,
           items: [...targetCat.items, newItem]
         };
-        await setDoc(doc(db, 'event_requirements', catId), updatedCat);
+        await setDoc(doc(db, 'event_requirements', catId), cleanUndefined(updatedCat));
       } catch (err) {
         console.error("Failed to add requirement item to Firestore:", err);
       }
@@ -240,7 +260,7 @@ export const EventRequirementsTab: React.FC = () => {
           ...targetCat,
           items: targetCat.items.filter(item => item.id !== itemId)
         };
-        await setDoc(doc(db, 'event_requirements', catId), updatedCat);
+        await setDoc(doc(db, 'event_requirements', catId), cleanUndefined(updatedCat));
       } catch (err) {
         console.error("Failed to delete requirement item from Firestore:", err);
       }
@@ -281,7 +301,7 @@ export const EventRequirementsTab: React.FC = () => {
             return item;
           })
         };
-        await setDoc(doc(db, 'event_requirements', catId), updatedCat);
+        await setDoc(doc(db, 'event_requirements', catId), cleanUndefined(updatedCat));
       } catch (err) {
         console.error("Failed to update requirement item in Firestore:", err);
       }
@@ -305,7 +325,7 @@ export const EventRequirementsTab: React.FC = () => {
             return item;
           })
         };
-        await setDoc(doc(db, 'event_requirements', catId), updatedCat);
+        await setDoc(doc(db, 'event_requirements', catId), cleanUndefined(updatedCat));
       } catch (err) {
         console.error("Failed to adjust requirement item quantity in Firestore:", err);
       }
@@ -325,7 +345,7 @@ export const EventRequirementsTab: React.FC = () => {
         }
         // Write the defaults
         for (const cat of DEFAULT_REQUIREMENTS) {
-          await setDoc(doc(db, 'event_requirements', cat.id), cat);
+          await setDoc(doc(db, 'event_requirements', cat.id), cleanUndefined(cat));
         }
       } catch (err) {
         console.error("Failed to reset requirements back to default, Firestore error:", err);
