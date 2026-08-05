@@ -2,37 +2,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Shared Event Dashboard: Allow real-time synchronization across all devices and browsers
-    
-    match /categories/{categoryId} {
-      allow read, write: if true;
-    }
 
-    match /timeline/{dayId} {
-      allow read, write: if true;
-    }
+    // Chakra360 collections
+    match /categories/{id} { allow read, write: if true; }
+    match /timeline/{id} { allow read, write: if true; }
+    match /stalls/{id} { allow read, write: if true; }
+    match /general_tasks/{id} { allow read, write: if true; }
+    match /map_markers/{id} { allow read, write: if true; }
+    match /map_categories/{id} { allow read, write: if true; }
+    match /event_requirements/{id} { allow read, write: if true; }
+    match /settings/{id} { allow read, write: if true; }
+    match /budget_chakra360/{id} { allow read, write: if true; }
+    match /sponsors_chakra360/{id} { allow read, write: if true; }
 
-    match /stalls/{stallId} {
-      allow read, write: if true;
-    }
+    // Kathawak collections
+    match /kathawak_categories/{id} { allow read, write: if true; }
+    match /timeline_kathawak/{id} { allow read, write: if true; }
+    match /stalls_kathawak/{id} { allow read, write: if true; }
+    match /general_tasks_kathawak/{id} { allow read, write: if true; }
+    match /map_markers_kathawak/{id} { allow read, write: if true; }
+    match /map_categories_kathawak/{id} { allow read, write: if true; }
+    match /event_requirements_kathawak/{id} { allow read, write: if true; }
+    match /budget_kathawak/{id} { allow read, write: if true; }
+    match /sponsors_kathawak/{id} { allow read, write: if true; }
 
-    match /general_tasks/{taskId} {
-      allow read, write: if true;
-    }
-
-    match /map_markers/{markerId} {
-      allow read, write: if true;
-    }
-
-    match /map_categories/{catId} {
-      allow read, write: if true;
-    }
-
-    match /event_requirements/{reqId} {
-      allow read, write: if true;
-    }
-
-    match /settings/{settingsId} {
+    // Catch-all rule for all other document collections
+    match /{document=**} {
       allow read, write: if true;
     }
   }
 }
+

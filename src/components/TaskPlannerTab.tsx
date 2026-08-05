@@ -61,28 +61,35 @@ export function formatToHumanDate(dateStr: string): string {
   return dateStr;
 }
 
-export function TaskPlannerTab() {
+interface TaskPlannerTabProps {
+  eventId?: 'chakra360' | 'kathawak';
+}
+
+export function TaskPlannerTab({ eventId = 'chakra360' }: TaskPlannerTabProps) {
+  const collectionName = eventId === 'kathawak' ? 'general_tasks_kathawak' : 'general_tasks';
+  const storageKey = eventId === 'kathawak' ? 'kathawak_general_tasks' : 'chakra_general_tasks';
+  const defaultDate = eventId === 'kathawak' ? '2026-08-10' : '2026-06-16';
+
   const [tasks, setTasks] = useState<GeneralTask[]>(() => {
-    const saved = localStorage.getItem('chakra_general_tasks');
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
-        return JSON.parse(saved);
-      } catch (_) {
-        // fallback
-      }
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 0) return parsed;
+      } catch (_) {}
     }
     return [];
   });
 
   useEffect(() => {
-    localStorage.setItem('chakra_general_tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    localStorage.setItem(storageKey, JSON.stringify(tasks));
+  }, [tasks, storageKey]);
 
-  const [selectedDate, setSelectedDate] = useState<string>('2026-06-16'); // default to 16 June 2026
+  const [selectedDate, setSelectedDate] = useState<string>(defaultDate);
   const [newTaskText, setNewTaskText] = useState<string>('');
   
   // Custom date addition
-  const [customDateInput, setCustomDateInput] = useState<string>('2026-06-19');
+  const [customDateInput, setCustomDateInput] = useState<string>(eventId === 'kathawak' ? '2026-08-12' : '2026-06-19');
   const [showAddDateModal, setShowAddDateModal] = useState<boolean>(false);
 
   // Editing state
@@ -99,23 +106,22 @@ export function TaskPlannerTab() {
     return () => unsubscribeAuth();
   }, []);
 
-  // Sync with Firestore in real-time unconditionally (both for guest and logged-in users)
+  // Sync with Firestore in real-time unconditionally
   useEffect(() => {
-    const path = 'general_tasks';
-    const unsubscribeSnapshot = onSnapshot(collection(db, path), (snapshot) => {
+    const unsubscribeSnapshot = onSnapshot(collection(db, collectionName), (snapshot) => {
       const list: GeneralTask[] = [];
       snapshot.forEach((doc) => {
         list.push(doc.data() as GeneralTask);
       });
       list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
       setTasks(list);
-      localStorage.setItem('chakra_general_tasks', JSON.stringify(list));
+      localStorage.setItem(storageKey, JSON.stringify(list));
     }, (error) => {
-      console.error("Firestore general_tasks snapshot error:", error);
+      console.error(`Firestore ${collectionName} snapshot error:`, error);
     });
 
     return () => unsubscribeSnapshot();
-  }, []);
+  }, [collectionName, storageKey]);
 
   // Operations wrapped with Firestore writes unconditionally
   const handleAddTask = async (text: string, date: string) => {
@@ -134,8 +140,7 @@ export function TaskPlannerTab() {
     setNewTaskText('');
 
     try {
-      const path = 'general_tasks';
-      await setDoc(doc(db, path, newTask.id), newTask);
+      await setDoc(doc(db, collectionName, newTask.id), newTask);
     } catch (error) {
       console.error("Failed to add task to Firestore:", error);
     }
@@ -148,8 +153,7 @@ export function TaskPlannerTab() {
     try {
       const target = updated.find(t => t.id === taskId);
       if (target) {
-        const path = 'general_tasks';
-        await setDoc(doc(db, path, taskId), target);
+        await setDoc(doc(db, collectionName, taskId), target);
       }
     } catch (error) {
       console.error("Failed to toggle task in Firestore:", error);
@@ -170,8 +174,7 @@ export function TaskPlannerTab() {
     try {
       const target = updated.find(t => t.id === taskId);
       if (target) {
-        const path = 'general_tasks';
-        await setDoc(doc(db, path, taskId), target);
+        await setDoc(doc(db, collectionName, taskId), target);
       }
     } catch (error) {
       console.error("Failed to edit task in Firestore:", error);
@@ -183,19 +186,19 @@ export function TaskPlannerTab() {
     setTasks(updated);
 
     try {
-      const path = 'general_tasks';
-      await deleteDoc(doc(db, path, taskId));
+      await deleteDoc(doc(db, collectionName, taskId));
     } catch (error) {
       console.error("Failed to delete task from Firestore:", error);
     }
   };
 
   // Extract all dates we currently have tasks planned for + current/past default ones
+  const initialPlanned = eventId === 'kathawak' 
+    ? ['2026-08-10', '2026-08-11', '2026-08-12', '2026-08-13', '2026-08-14', '2026-08-15']
+    : ['2026-06-15', '2026-06-16', '2026-06-17', '2026-06-18'];
+
   const plannedDates = Array.from(new Set([
-    '2026-06-15',
-    '2026-06-16',
-    '2026-06-17',
-    '2026-06-18',
+    ...initialPlanned,
     ...tasks.map(t => t.date)
   ])).sort();
 

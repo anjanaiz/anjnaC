@@ -1,6 +1,6 @@
 {
-  "name": "Chakra 360 Live Event Production Dashboard",
-  "description": "A dark event production tracking and timeline dashboard designed for CHAKRA 360 LIVE IN CONCERT featuring asset tracking, content category progress, status updates, and interactive day-by-day scheduling.",
+  "name": "SAS Entertainment Event Production Dashboard",
+  "description": "Multi-event live event production tracking dashboard for SAS Entertainment, featuring production hubs for Chakra 360 Live in Concert and Kathawak Film in Concert, equipped with media shoot planning, task workflows, budget tracking, event maps, site requirements, stall details, and sponsor management.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

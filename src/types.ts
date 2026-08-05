@@ -44,3 +44,47 @@ export interface Stall {
   createdAt?: number;
 }
 
+export interface BudgetItem {
+  id: string;
+  category: 'Venue & Security' | 'Sound & Stage' | 'Artist & Performance' | 'Media & Marketing' | 'Logistics & Hospitality' | 'Sponsorship & Revenue' | 'Miscellaneous';
+  title: string;
+  type: 'Expense' | 'Income';
+  estimatedAmount: number;
+  actualAmount: number;
+  paidAmount: number;
+  paymentStatus: 'Unpaid' | 'Partial' | 'Paid' | 'Overdue';
+  vendorOrSource: string;
+  dueDate?: string;
+  notes?: string;
+}
+
+export type SponsorTier = 'Title Sponsor' | 'Platinum' | 'Gold' | 'Silver' | 'Media Partner' | 'Beverage Partner' | 'Official Supporter';
+
+export interface Sponsor {
+  id: string;
+  name: string;
+  brandName: string;
+  tier: SponsorTier;
+  contactPerson: string;
+  phone: string;
+  email?: string;
+  contractValue: number;
+  amountReceived: number;
+  paymentStatus: 'Pending' | 'Partial' | 'Completed';
+  logoUrl?: string;
+  deliverables: { id: string; text: string; completed: boolean }[];
+  status: 'In Discussion' | 'Confirmed' | 'Signed' | 'Fulfilled';
+  notes?: string;
+}
+
+export interface EventInfo {
+  id: 'chakra360' | 'kathawak';
+  name: string;
+  subtitle: string;
+  date: string;
+  venue: string;
+  logo: string;
+  accentColor: string;
+  badge: string;
+}
+

@@ -601,9 +601,18 @@ export const getZoneStatus = (x: number, y: number, category: string) => {
   };
 };
 
-export const EventMapTab: React.FC = () => {
+interface EventMapTabProps {
+  eventId?: 'chakra360' | 'kathawak';
+}
+
+export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' }) => {
+  const markersCollection = eventId === 'kathawak' ? 'map_markers_kathawak' : 'map_markers';
+  const categoriesCollection = eventId === 'kathawak' ? 'map_categories_kathawak' : 'map_categories';
+  const markersStorageKey = eventId === 'kathawak' ? 'kathawak_map_markers' : 'chakra_event_layout_markers_v4';
+  const categoriesStorageKey = eventId === 'kathawak' ? 'kathawak_map_categories' : 'chakra_event_custom_categories_v4';
+
   const [markers, setMarkersRaw] = useState<MapMarker[]>(() => {
-    const saved = localStorage.getItem('chakra_event_layout_markers_v4');
+    const saved = localStorage.getItem(markersStorageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -619,7 +628,7 @@ export const EventMapTab: React.FC = () => {
   });
 
   const [customCategories, setCustomCategoriesRaw] = useState<string[]>(() => {
-    const saved = localStorage.getItem('chakra_event_custom_categories_v4');
+    const saved = localStorage.getItem(categoriesStorageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -632,20 +641,20 @@ export const EventMapTab: React.FC = () => {
   const setMarkers = (updater: MapMarker[] | ((prev: MapMarker[]) => MapMarker[])) => {
     const nextMarkers = typeof updater === 'function' ? updater(markers) : updater;
     setMarkersRaw(nextMarkers);
-    localStorage.setItem('chakra_event_layout_markers_v4', JSON.stringify(nextMarkers));
+    localStorage.setItem(markersStorageKey, JSON.stringify(nextMarkers));
     
     // Dispatch event to notify layout modifications
     window.dispatchEvent(new Event('chakra_map_data_changed'));
 
     const sync = async () => {
-      const oldIds = new Set(markers.map(m => m.id));
-      const newIds = new Set(nextMarkers.map(m => m.id));
+      const oldIds = new Set<string>(markers.map(m => m.id));
+      const newIds = new Set<string>(nextMarkers.map(m => m.id));
 
       // Deleted
       for (const id of oldIds) {
         if (!newIds.has(id)) {
           try {
-            await deleteDoc(doc(db, 'map_markers', id));
+            await deleteDoc(doc(db, markersCollection, id as string));
           } catch (err) {
             console.error("Failed to delete marker from Firestore:", err);
           }
@@ -657,7 +666,7 @@ export const EventMapTab: React.FC = () => {
         const oldVal = markers.find(o => o.id === m.id);
         if (!oldVal || JSON.stringify(oldVal) !== JSON.stringify(m)) {
           try {
-            await setDoc(doc(db, 'map_markers', m.id), m);
+            await setDoc(doc(db, markersCollection, m.id), m);
           } catch (err) {
             console.error("Failed to update marker in Firestore:", err);
           }
@@ -670,16 +679,16 @@ export const EventMapTab: React.FC = () => {
   const setCustomCategories = (updater: string[] | ((prev: string[]) => string[])) => {
     const nextCats = typeof updater === 'function' ? updater(customCategories) : updater;
     setCustomCategoriesRaw(nextCats);
-    localStorage.setItem('chakra_event_custom_categories_v4', JSON.stringify(nextCats));
+    localStorage.setItem(categoriesStorageKey, JSON.stringify(nextCats));
 
     const sync = async () => {
-      const oldSet = new Set(customCategories);
-      const newSet = new Set(nextCats);
+      const oldSet = new Set<string>(customCategories);
+      const newSet = new Set<string>(nextCats);
 
       for (const cat of oldSet) {
         if (!newSet.has(cat)) {
           try {
-            await deleteDoc(doc(db, 'map_categories', cat));
+            await deleteDoc(doc(db, categoriesCollection, cat as string));
           } catch (err) {
             console.error("Failed to delete category from Firestore:", err);
           }
@@ -689,7 +698,7 @@ export const EventMapTab: React.FC = () => {
       for (const cat of newSet) {
         if (!oldSet.has(cat)) {
           try {
-            await setDoc(doc(db, 'map_categories', cat), {});
+            await setDoc(doc(db, categoriesCollection, cat), {});
           } catch (err) {
             console.error("Failed to add category to Firestore:", err);
           }
@@ -705,7 +714,7 @@ export const EventMapTab: React.FC = () => {
 
   // Real-time synchronization unconditionally
   useEffect(() => {
-    const unsubMarkers = onSnapshot(collection(db, 'map_markers'), (snapshot) => {
+    const unsubMarkers = onSnapshot(collection(db, markersCollection), (snapshot) => {
       const list: MapMarker[] = [];
       snapshot.forEach(doc => {
         const data = doc.data() as MapMarker;
@@ -716,13 +725,13 @@ export const EventMapTab: React.FC = () => {
       });
       if (list.length > 0) {
         setMarkersRaw(list);
-        localStorage.setItem('chakra_event_layout_markers_v4', JSON.stringify(list));
+        localStorage.setItem(markersStorageKey, JSON.stringify(list));
       }
     }, (err) => {
-      handleFirestoreError(err, OperationType.GET, 'map_markers');
+      handleFirestoreError(err, OperationType.GET, markersCollection);
     });
 
-    const unsubCats = onSnapshot(collection(db, 'map_categories'), (snapshot) => {
+    const unsubCats = onSnapshot(collection(db, categoriesCollection), (snapshot) => {
       const list: string[] = [];
       snapshot.forEach(doc => {
         list.push(doc.id);
@@ -730,84 +739,22 @@ export const EventMapTab: React.FC = () => {
       const uniqueCats = Array.from(new Set(list)).filter(Boolean);
       if (uniqueCats.length > 0) {
         setCustomCategoriesRaw(uniqueCats);
-        localStorage.setItem('chakra_event_custom_categories_v4', JSON.stringify(uniqueCats));
+        localStorage.setItem(categoriesStorageKey, JSON.stringify(uniqueCats));
       }
     }, (err) => {
-      handleFirestoreError(err, OperationType.GET, 'map_categories');
+      handleFirestoreError(err, OperationType.GET, categoriesCollection);
     });
 
     const seedMapDataIfEmpty = async () => {
       try {
-        let markerSnap;
-        try {
-          markerSnap = await getDocs(collection(db, 'map_markers'));
-        } catch (err) {
-          handleFirestoreError(err, OperationType.LIST, 'map_markers');
-          return;
-        }
-
-        if (markerSnap.empty) {
-          // Sync with local fallback / INITIAL_MARKERS
-          let initialData: MapMarker[] = [];
-          if (markers.length > 0) {
-            initialData = markers;
-          } else {
-            const saved = localStorage.getItem('chakra_event_layout_markers_v4');
-            if (saved) {
-              try {
-                initialData = JSON.parse(saved);
-              } catch (_) {}
-            }
-          }
-          if (!initialData || initialData.length === 0) {
-            initialData = INITIAL_MARKERS;
-          }
-
-          const defaultMarkers = initialData.map(m => ({
-            ...m,
-            resources: m.resources ? m.resources.filter(r => !r.id.startsWith('res_df_')) : []
-          }));
-
-          for (const m of defaultMarkers) {
-            try {
-              await setDoc(doc(db, 'map_markers', m.id), m);
-            } catch (err) {
-              handleFirestoreError(err, OperationType.WRITE, `map_markers/${m.id}`);
-            }
-          }
-        }
-
-        let catSnap;
-        try {
-          catSnap = await getDocs(collection(db, 'map_categories'));
-        } catch (err) {
-          handleFirestoreError(err, OperationType.LIST, 'map_categories');
-          return;
-        }
-
-        if (catSnap.empty) {
-          let initialCats: string[] = [];
-          if (customCategories.length > 0) {
-            initialCats = customCategories;
-          } else {
-            const savedCats = localStorage.getItem('chakra_event_custom_categories_v4');
-            if (savedCats) {
-              try {
-                initialCats = JSON.parse(savedCats);
-              } catch (_) {}
-            }
-          }
-
-          for (const cat of initialCats) {
-            try {
-              await setDoc(doc(db, 'map_categories', cat), {});
-            } catch (err) {
-              handleFirestoreError(err, OperationType.WRITE, `map_categories/${cat}`);
-            }
+        const snap = await getDocs(collection(db, markersCollection));
+        if (snap.empty) {
+          for (const m of INITIAL_MARKERS) {
+            await setDoc(doc(db, markersCollection, m.id), m);
           }
         }
       } catch (err) {
-        console.error("Failed to seed layout map data:", err);
+        console.error("Failed to seed initial map markers:", err);
       }
     };
     seedMapDataIfEmpty();
@@ -816,7 +763,7 @@ export const EventMapTab: React.FC = () => {
       unsubMarkers();
       unsubCats();
     };
-  }, []);
+  }, [markersCollection, categoriesCollection, markersStorageKey, categoriesStorageKey]);
 
   useEffect(() => {
     const fetchGitDataOnMount = async () => {

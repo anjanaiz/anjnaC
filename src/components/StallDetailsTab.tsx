@@ -27,16 +27,28 @@ const DEFAULT_STALLS: Stall[] = [
   { id: 'stall_15', name: 'Sunquick Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: [], notes: '' },
 ];
 
-export const StallDetailsTab: React.FC = () => {
+interface StallDetailsTabProps {
+  eventId?: 'chakra360' | 'kathawak';
+  initialStalls?: Stall[];
+}
+
+export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
+  eventId = 'chakra360',
+  initialStalls = []
+}) => {
+  const storageKey = eventId === 'kathawak' ? 'kathawak_stalls' : 'chakra_stalls';
+  const collectionName = eventId === 'kathawak' ? 'stalls_kathawak' : 'stalls';
+  const defaultList = eventId === 'kathawak' && initialStalls.length > 0 ? initialStalls : DEFAULT_STALLS;
+
   const [stalls, setStalls] = useState<Stall[]>(() => {
-    const saved = localStorage.getItem('chakra_stalls');
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.length > 0) return parsed;
       } catch (_) {}
     }
-    return [];
+    return defaultList;
   });
 
   const [loading, setLoading] = useState(true);
@@ -59,7 +71,7 @@ export const StallDetailsTab: React.FC = () => {
 
   // Fetch from Firestore on mount
   useEffect(() => {
-    const stallsRef = collection(db, 'stalls');
+    const stallsRef = collection(db, collectionName);
     const unsubscribe = onSnapshot(stallsRef, (snapshot) => {
       const list: Stall[] = [];
       snapshot.forEach(doc => {
@@ -69,35 +81,35 @@ export const StallDetailsTab: React.FC = () => {
       // Maintain order or sort alphabetically by name
       list.sort((a, b) => a.name.localeCompare(b.name));
 
-      setStalls(list);
-      localStorage.setItem('chakra_stalls', JSON.stringify(list));
+      if (list.length > 0) {
+        setStalls(list);
+        localStorage.setItem(storageKey, JSON.stringify(list));
+      } else {
+        seedDefaultStallsIfEmpty();
+      }
       setLoading(false);
     }, (err) => {
-      handleFirestoreError(err, OperationType.GET, 'stalls');
+      handleFirestoreError(err, OperationType.GET, collectionName);
       setLoading(false);
     });
 
-    // Seed database with default 15 stalls if empty
+    // Seed database with default stalls if empty
     const seedDefaultStallsIfEmpty = async () => {
       try {
         const snap = await getDocs(stallsRef);
         if (snap.empty) {
-          console.log("Seeding default 15 stalls...");
-          for (const stall of DEFAULT_STALLS) {
-            await setDoc(doc(db, 'stalls', stall.id), {
-              ...stall,
-              createdAt: Date.now()
-            });
+          console.log(`Seeding default stalls for ${collectionName}...`);
+          for (const s of defaultList) {
+            await setDoc(doc(db, collectionName, s.id), s);
           }
         }
       } catch (err) {
-        handleFirestoreError(err, OperationType.GET, 'stalls');
+        console.error("Failed to seed default stalls in Firestore:", err);
       }
     };
-    seedDefaultStallsIfEmpty();
 
     return () => unsubscribe();
-  }, []);
+  }, [collectionName, storageKey]);
 
   const handleOpenAddForm = () => {
     setEditingStallId(null);
@@ -151,10 +163,10 @@ export const StallDetailsTab: React.FC = () => {
     };
 
     try {
-      await setDoc(doc(db, 'stalls', stallId), targetStall);
+      await setDoc(doc(db, collectionName, stallId), targetStall);
       setIsFormOpen(false);
     } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `stalls/${stallId}`);
+      handleFirestoreError(err, OperationType.WRITE, `${collectionName}/${stallId}`);
       setIsFormOpen(false);
     }
   };
@@ -163,9 +175,9 @@ export const StallDetailsTab: React.FC = () => {
     if (!confirm(`Are you absolutely sure you want to delete "${name}"? This action cannot be undone.`)) return;
 
     try {
-      await deleteDoc(doc(db, 'stalls', id));
+      await deleteDoc(doc(db, collectionName, id));
     } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `stalls/${id}`);
+      handleFirestoreError(err, OperationType.DELETE, `${collectionName}/${id}`);
     }
   };
 
@@ -188,10 +200,10 @@ export const StallDetailsTab: React.FC = () => {
       remainingBalance: Number(inlineData.remainingBalance) || 0
     };
     try {
-      await setDoc(doc(db, 'stalls', stall.id), updated);
+      await setDoc(doc(db, collectionName, stall.id), updated);
       setInlineEditingId(null);
     } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `stalls/${stall.id}`);
+      handleFirestoreError(err, OperationType.WRITE, `${collectionName}/${stall.id}`);
       setInlineEditingId(null);
     }
   };

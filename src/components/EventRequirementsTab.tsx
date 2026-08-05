@@ -111,22 +111,29 @@ const cleanUndefined = (obj: any): any => {
   return obj;
 };
 
-export const EventRequirementsTab: React.FC = () => {
+interface EventRequirementsTabProps {
+  eventId?: 'chakra360' | 'kathawak';
+}
+
+export const EventRequirementsTab: React.FC<EventRequirementsTabProps> = ({ eventId = 'chakra360' }) => {
+  const collectionName = eventId === 'kathawak' ? 'event_requirements_kathawak' : 'event_requirements';
+  const storageKey = eventId === 'kathawak' ? 'kathawak_event_requirements' : 'chakra_event_requirements';
+
   // Load state or use fallback
   const [categories, setCategories] = useState<RequirementCategory[]>(() => {
-    const saved = localStorage.getItem('chakra_event_requirements');
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.length > 0) return parsed;
       } catch (_) {}
     }
-    return [];
+    return DEFAULT_REQUIREMENTS;
   });
 
   useEffect(() => {
-    localStorage.setItem('chakra_event_requirements', JSON.stringify(categories));
-  }, [categories]);
+    localStorage.setItem(storageKey, JSON.stringify(categories));
+  }, [categories, storageKey]);
 
   // Track category in active view if user prefers a grid/filter layout
   const [selectedFilterCategory, setSelectedFilterCategory] = useState<string>('all');
@@ -150,8 +157,7 @@ export const EventRequirementsTab: React.FC = () => {
 
   // Real-time synchronization unconditionally
   useEffect(() => {
-    const path = 'event_requirements';
-    const unsubscribe = onSnapshot(collection(db, path), (snapshot) => {
+    const unsubscribe = onSnapshot(collection(db, collectionName), (snapshot) => {
       const list: RequirementCategory[] = [];
       snapshot.forEach(doc => {
         list.push(doc.data() as RequirementCategory);
@@ -164,14 +170,21 @@ export const EventRequirementsTab: React.FC = () => {
         if (idxB === -1) return -1;
         return idxA - idxB;
       });
-      setCategories(list);
-      localStorage.setItem('chakra_event_requirements', JSON.stringify(list));
+      if (list.length > 0) {
+        setCategories(list);
+        localStorage.setItem(storageKey, JSON.stringify(list));
+      } else {
+        // Seed default if empty
+        DEFAULT_REQUIREMENTS.forEach(r => {
+          setDoc(doc(db, collectionName, r.id), cleanUndefined(r)).catch(console.error);
+        });
+      }
     }, (err) => {
-      console.error("Firestore event_requirements snapshot error:", err);
+      console.error(`Firestore ${collectionName} snapshot error:`, err);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [collectionName, storageKey]);
 
   // Create Category
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -194,7 +207,7 @@ export const EventRequirementsTab: React.FC = () => {
 
     setCategoryInput('');
     try {
-      await setDoc(doc(db, 'event_requirements', newCatObj.id), cleanUndefined(newCatObj));
+      await setDoc(doc(db, collectionName, newCatObj.id), cleanUndefined(newCatObj));
     } catch (err) {
       console.error("Failed to add requirements category in Firestore:", err);
     }
@@ -207,7 +220,7 @@ export const EventRequirementsTab: React.FC = () => {
         setSelectedFilterCategory('all');
       }
       try {
-        await deleteDoc(doc(db, 'event_requirements', catId));
+        await deleteDoc(doc(db, collectionName, catId));
       } catch (err) {
         console.error("Failed to delete requirements category from Firestore:", err);
       }
@@ -244,7 +257,7 @@ export const EventRequirementsTab: React.FC = () => {
           ...targetCat,
           items: [...targetCat.items, newItem]
         };
-        await setDoc(doc(db, 'event_requirements', catId), cleanUndefined(updatedCat));
+        await setDoc(doc(db, collectionName, catId), cleanUndefined(updatedCat));
       } catch (err) {
         console.error("Failed to add requirement item to Firestore:", err);
       }
@@ -260,7 +273,7 @@ export const EventRequirementsTab: React.FC = () => {
           ...targetCat,
           items: targetCat.items.filter(item => item.id !== itemId)
         };
-        await setDoc(doc(db, 'event_requirements', catId), cleanUndefined(updatedCat));
+        await setDoc(doc(db, collectionName, catId), cleanUndefined(updatedCat));
       } catch (err) {
         console.error("Failed to delete requirement item from Firestore:", err);
       }
@@ -301,7 +314,7 @@ export const EventRequirementsTab: React.FC = () => {
             return item;
           })
         };
-        await setDoc(doc(db, 'event_requirements', catId), cleanUndefined(updatedCat));
+        await setDoc(doc(db, collectionName, catId), cleanUndefined(updatedCat));
       } catch (err) {
         console.error("Failed to update requirement item in Firestore:", err);
       }
@@ -325,7 +338,7 @@ export const EventRequirementsTab: React.FC = () => {
             return item;
           })
         };
-        await setDoc(doc(db, 'event_requirements', catId), cleanUndefined(updatedCat));
+        await setDoc(doc(db, collectionName, catId), cleanUndefined(updatedCat));
       } catch (err) {
         console.error("Failed to adjust requirement item quantity in Firestore:", err);
       }
