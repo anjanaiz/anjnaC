@@ -13,8 +13,8 @@ export const EVENTS_LIST: EventInfo[] = [
     id: 'chakra360',
     name: 'Chakra 360 Live in Concert',
     subtitle: 'Chakra 360 Live Production & Media Control',
-    date: 'JUNE 28, 2026',
-    venue: 'Air Force Grounds Colombo',
+    date: 'JANUARY 09, 2027',
+    venue: 'Air Force Ground Colombo',
     logo: chakraLogo,
     accentColor: '#FF6B00',
     badge: 'LIVE PRODUCTION'
@@ -23,8 +23,8 @@ export const EVENTS_LIST: EventInfo[] = [
     id: 'kathawak',
     name: 'Kathawak Film in Concert',
     subtitle: 'කතාවක් - The Story of Music Symphonic Production',
-    date: 'AUGUST 15, 2026',
-    venue: 'Nelum Pokuna Grand Complex Colombo',
+    date: 'NOVEMBER 2026 (TBA)',
+    venue: 'Viharamahadevi Open Air Stadium Colombo',
     logo: kathawakLogo,
     accentColor: '#EAB308',
     badge: 'NEW PRODUCTION'

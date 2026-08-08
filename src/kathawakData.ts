@@ -180,21 +180,21 @@ export const KATHAWAK_INITIAL_STALLS: Stall[] = [
   {
     id: 'kstall_1',
     name: 'Stall #01 - Movie Merchandise & Vinyl Corner',
-    vendorName: 'CineMerch LK (Rohan Dissanayake)',
-    whatsappNumber: '+94778899000',
-    advancePayment: 35000,
-    remainingBalance: 15000,
+    vendorName: '',
+    whatsappNumber: '',
+    advancePayment: 0,
+    remainingBalance: 0,
     items: ['Collector Film Posters', 'Vinyl LPs', 'Concert T-Shirts', 'Keychains'],
     notes: 'Requires 1x 13A Power Outlet and 2x Spotlights'
   },
   {
     id: 'kstall_2',
     name: 'Stall #02 - Gourmet Coffee & Artisanal Snacks',
-    vendorName: 'Artisan Roast Colombo',
-    whatsappNumber: '+94712233444',
-    advancePayment: 50000,
+    vendorName: '',
+    whatsappNumber: '',
+    advancePayment: 0,
     remainingBalance: 0,
     items: ['Espresso Bar', 'Gourmet Sandwiches', 'Popcorn Sets'],
-    notes: 'Paid in full. Requires high-power outlet for espresso machine.'
+    notes: 'Requires high-power outlet for espresso machine.'
   }
 ];

@@ -243,7 +243,7 @@ export default function App() {
     fileReader.readAsText(files[0]);
   };
 
-  const CURRENT_DATE_STRING = selectedEventId === 'kathawak' ? 'AUGUST 15' : 'JUNE 28';
+  const CURRENT_DATE_STRING = selectedEventId === 'kathawak' ? 'NOVEMBER 2026' : 'JANUARY 09, 2027';
 
   // Dynamic collection and storage key names based on active event
   const categoriesCollection = selectedEventId === 'kathawak' ? 'kathawak_categories' : 'categories';
