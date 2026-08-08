@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { 
   initializeFirestore,
+  getFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
   setLogLevel,
@@ -37,13 +38,22 @@ const typedConfig = firebaseConfig as FirebaseConfigExtended;
 // Set Firestore log level to error to ignore benign connection warnings when offline/sandboxed
 setLogLevel('error');
 
-export const db = typedConfig.firestoreDatabaseId
-  ? initializeFirestore(app, {
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    }, typedConfig.firestoreDatabaseId)
-  : initializeFirestore(app, {
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    });
+// Initialize Firestore with fallback for iframe environments where IndexedDB might throw
+let firestoreDb;
+try {
+  firestoreDb = typedConfig.firestoreDatabaseId
+    ? initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      }, typedConfig.firestoreDatabaseId)
+    : initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      });
+} catch (e) {
+  console.warn("Persistent cache init failed, falling back to default db initialization:", e);
+  firestoreDb = getFirestore(app, typedConfig.firestoreDatabaseId || undefined);
+}
+
+export const db = firestoreDb;
 
 // Initialize Authentication
 export const auth = getAuth(app);

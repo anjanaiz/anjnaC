@@ -10,6 +10,7 @@ import { EventRequirementsTab } from './components/EventRequirementsTab';
 import { TaskPlannerTab } from './components/TaskPlannerTab';
 import { BudgetTrackerTab } from './components/BudgetTrackerTab';
 import { SponsorManagementTab } from './components/SponsorManagementTab';
+import { TicketsTab } from './components/TicketsTab';
 import { EventsHubView, EVENTS_LIST } from './components/EventsHubView';
 import { 
   Film, 
@@ -30,7 +31,8 @@ import {
   ClipboardList,
   ListTodo,
   Layers,
-  MapPin
+  MapPin,
+  Ticket
 } from 'lucide-react';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationType, checkDbOnline } from './firebase';
@@ -38,7 +40,7 @@ import { chakraLogoBase64 as chakraLogo } from './assets/images/logoBase64';
 
 export default function App() {
   const [selectedEventId, setSelectedEventId] = useState<'chakra360' | 'kathawak' | null>('chakra360');
-  const [activeTab, setActiveTab] = useState<'shoot' | 'stalls' | 'map' | 'requirements' | 'tasks' | 'budget' | 'sponsors'>('shoot');
+  const [activeTab, setActiveTab] = useState<'shoot' | 'stalls' | 'map' | 'requirements' | 'tasks' | 'budget' | 'sponsors' | 'tickets'>('shoot');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Real-time Sync & Authentication States
@@ -651,6 +653,20 @@ export default function App() {
               </div>
             </button>
 
+            <button
+              onClick={() => setActiveTab('tickets')}
+              className={`w-full flex items-center justify-between p-2.5 px-3 rounded-xl transition-all duration-200 font-display text-xs font-bold cursor-pointer text-left ${
+                activeTab === 'tickets'
+                  ? 'text-white bg-white/10 border border-white/20 shadow-md'
+                  : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Ticket size={14} style={{ color: activeTab === 'tickets' ? activeEvent.accentColor : undefined }} />
+                <span>TICKETS</span>
+              </div>
+            </button>
+
             {/* BACKUP DATA KIT */}
             <div className="pt-3 border-t border-white/5 mt-3 space-y-2">
               <div className="flex items-center justify-between text-[9px] font-mono text-zinc-400">
@@ -757,7 +773,8 @@ export default function App() {
               <button onClick={() => { setActiveTab('map'); setMobileMenuOpen(false); }} className={`p-2 rounded ${activeTab === 'map' ? 'bg-[#FF6B00] text-black font-bold' : 'bg-white/5 text-white'}`}>EVENT MAP</button>
               <button onClick={() => { setActiveTab('requirements'); setMobileMenuOpen(false); }} className={`p-2 rounded ${activeTab === 'requirements' ? 'bg-[#FF6B00] text-black font-bold' : 'bg-white/5 text-white'}`}>REQUIREMENTS</button>
               <button onClick={() => { setActiveTab('stalls'); setMobileMenuOpen(false); }} className={`p-2 rounded ${activeTab === 'stalls' ? 'bg-[#FF6B00] text-black font-bold' : 'bg-white/5 text-white'}`}>STALLS</button>
-              <button onClick={() => { setActiveTab('sponsors'); setMobileMenuOpen(false); }} className={`p-2 rounded col-span-2 ${activeTab === 'sponsors' ? 'bg-[#FF6B00] text-black font-bold' : 'bg-white/5 text-white'}`}>SPONSORS</button>
+              <button onClick={() => { setActiveTab('sponsors'); setMobileMenuOpen(false); }} className={`p-2 rounded ${activeTab === 'sponsors' ? 'bg-[#FF6B00] text-black font-bold' : 'bg-white/5 text-white'}`}>SPONSORS</button>
+              <button onClick={() => { setActiveTab('tickets'); setMobileMenuOpen(false); }} className={`p-2 rounded col-span-2 ${activeTab === 'tickets' ? 'bg-[#FF6B00] text-black font-bold' : 'bg-white/5 text-white'}`}>TICKETS</button>
             </div>
             <div className="pt-2 border-t border-white/10">
               <button onClick={() => { setSelectedEventId(null); setMobileMenuOpen(false); }} className="w-full py-2 bg-white/10 rounded font-mono text-[10px] text-white">← Switch Event</button>
@@ -785,6 +802,7 @@ export default function App() {
               {activeTab === 'requirements' && 'EVENT REQUIREMENTS'}
               {activeTab === 'stalls' && 'STALL DETAILS MANAGEMENT'}
               {activeTab === 'sponsors' && 'SPONSOR MANAGEMENT'}
+              {activeTab === 'tickets' && 'TICKETS & PRICING MANAGEMENT'}
             </h2>
           </div>
 
@@ -841,6 +859,9 @@ export default function App() {
             )}
             {activeTab === 'sponsors' && (
               <SponsorManagementTab eventId={selectedEventId} />
+            )}
+            {activeTab === 'tickets' && (
+              <TicketsTab eventId={selectedEventId} />
             )}
 
             {/* Locked Database Offline Overlay Banner */}

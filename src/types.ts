@@ -88,3 +88,31 @@ export interface EventInfo {
   badge: string;
 }
 
+export type TicketPhaseId = 'early_bird' | 'presale_1' | 'presale_2';
+export type TicketPhaseStatus = 'Active' | 'Upcoming' | 'Closed';
+
+export interface TicketCategoryItem {
+  id: string;
+  name: string;
+  pax: string; // e.g. "1 Pax", "6 Pax"
+  price: number | null; // null represents "Price Not Set / TBA"
+  isSoldOut?: boolean;
+  isEnabled?: boolean;
+  description?: string;
+}
+
+export interface TicketPhase {
+  id: TicketPhaseId;
+  name: string; // "Early Bird", "Pre-Sale 1", "Pre-Sale 2"
+  status: TicketPhaseStatus;
+  categories: TicketCategoryItem[];
+  ticketsSold?: number;
+  revenue?: number;
+  remainingTickets?: number | null;
+}
+
+export interface EventTicketsConfig {
+  phases: TicketPhase[];
+  updatedAt?: number;
+}
+
