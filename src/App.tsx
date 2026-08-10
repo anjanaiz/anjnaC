@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { INITIAL_CATEGORIES } from './data';
-import { KATHAWAK_INITIAL_CATEGORIES as KATHAWAK_CATEGORIES } from './kathawakData';
+import { INITIAL_CATEGORIES, CHAKRA_INITIAL_BUDGET } from './data';
+import { KATHAWAK_INITIAL_CATEGORIES as KATHAWAK_CATEGORIES, KATHAWAK_INITIAL_BUDGET } from './kathawakData';
 import { Category, Stall } from './types';
 import { StatsOverview } from './components/StatsOverview';
 import { ShootListTab } from './components/ShootListTab';
@@ -840,13 +840,17 @@ export default function App() {
               <ShootListTab 
                 categories={categories} 
                 setCategories={handleSetCategories} 
+                eventId={selectedEventId}
               />
             )}
             {activeTab === 'tasks' && (
               <TaskPlannerTab eventId={selectedEventId} />
             )}
             {activeTab === 'budget' && (
-              <BudgetTrackerTab eventId={selectedEventId} />
+              <BudgetTrackerTab 
+                eventId={selectedEventId} 
+                initialItems={selectedEventId === 'kathawak' ? KATHAWAK_INITIAL_BUDGET : CHAKRA_INITIAL_BUDGET}
+              />
             )}
             {activeTab === 'map' && (
               <EventMapTab eventId={selectedEventId} />

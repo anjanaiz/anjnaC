@@ -46,7 +46,7 @@ export interface Stall {
 
 export interface BudgetItem {
   id: string;
-  category: 'Venue & Security' | 'Sound & Stage' | 'Artist & Performance' | 'Media & Marketing' | 'Logistics & Hospitality' | 'Sponsorship & Revenue' | 'Miscellaneous';
+  category: string;
   title: string;
   type: 'Expense' | 'Income';
   estimatedAmount: number;

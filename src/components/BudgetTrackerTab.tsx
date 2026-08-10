@@ -175,7 +175,7 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
 
   const resetForm = () => {
     setFormData({
-      category: 'Venue & Security',
+      category: eventId === 'chakra360' ? 'Artist Lineup' : 'Venue & Security',
       title: '',
       type: 'Expense',
       estimatedAmount: 0,
@@ -186,6 +186,20 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
       dueDate: '',
       notes: ''
     });
+  };
+
+  const handleResetToDefaults = async () => {
+    if (confirm("Reset budget items to default event budget template?")) {
+      setItems(initialItems);
+      localStorage.setItem(storageKey, JSON.stringify(initialItems));
+      for (const item of initialItems) {
+        try {
+          await setDoc(doc(db, collectionName, item.id), cleanUndefined(item));
+        } catch (e) {
+          console.error("Firestore reseed error:", e);
+        }
+      }
+    }
   };
 
   // Metric calculations
@@ -211,7 +225,21 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
     return matchesSearch && matchesCategory && matchesType && matchesStatus;
   });
 
-  const categoriesList = [
+  const categoriesList = eventId === 'chakra360' ? [
+    'Artist Lineup',
+    'Band',
+    'Stage, LED Wall, Fire & Lighting',
+    'Location',
+    'Audience Table Seating & Barricade Gates',
+    'Bouncers',
+    'Marketing',
+    'Estimated Government Tax',
+    'Venue & Security', 
+    'Sound & Stage', 
+    'Artist & Performance', 
+    'Media & Marketing', 
+    'Miscellaneous'
+  ] : [
     'Venue & Security', 
     'Sound & Stage', 
     'Artist & Performance', 
@@ -355,6 +383,16 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
             <option value="Overdue" className="bg-zinc-900">Overdue</option>
           </select>
 
+          {/* RESET TO DEFAULTS BUTTON */}
+          <button
+            onClick={handleResetToDefaults}
+            title="Reset to official event budget template"
+            className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-700 hover:border-[#FF6B00] text-zinc-300 hover:text-white font-mono text-xs rounded-xl transition cursor-pointer"
+          >
+            <Layers size={13} className="text-[#FF6B00]" />
+            <span>Load Event Template</span>
+          </button>
+
           {/* ADD BUTTON */}
           <button
             onClick={() => {
@@ -362,7 +400,7 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
               setEditingItem(null);
               setModalOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#FF6B00] hover:bg-[#FF852B] text-black font-bold font-mono text-xs uppercase rounded-xl transition cursor-pointer shadow-[0_0_15px_rgba(255,107,0,0.3)] ml-auto"
+            className="flex items-center gap-2 px-4 py-2 bg-[#FF6B00] hover:bg-[#FF852B] text-black font-bold font-mono text-xs uppercase rounded-xl transition cursor-pointer shadow-[0_0_15px_rgba(255,107,0,0.3)]"
           >
             <Plus size={14} />
             <span>Add Budget Entry</span>

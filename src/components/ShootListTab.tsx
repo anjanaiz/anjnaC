@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Category, VideoItem, TaskStatus } from '../types';
+import { CHAKRA_OFFICIAL_ARTIST_LINEUP } from '../data';
 import { 
   Plus, 
   Trash2, 
@@ -14,17 +15,21 @@ import {
   Play, 
   Loader2, 
   CheckCircle,
-  HelpCircle
+  HelpCircle,
+  Users,
+  Mic2
 } from 'lucide-react';
 
 interface ShootListTabProps {
   categories: Category[];
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
+  eventId?: 'chakra360' | 'kathawak';
 }
 
 export const ShootListTab: React.FC<ShootListTabProps> = ({
   categories,
   setCategories,
+  eventId = 'chakra360'
 }) => {
   const [newCatName, setNewCatName] = useState('');
   const [isAddingCat, setIsAddingCat] = useState(false);
@@ -183,6 +188,41 @@ export const ShootListTab: React.FC<ShootListTabProps> = ({
 
   return (
     <div className="space-y-6" id="shoot-list-page">
+      {/* Official Artist Lineup Banner for Chakra 360 */}
+      {eventId === 'chakra360' && (
+        <div className="bg-[#0D0D0D] border border-[#FF6B00]/30 rounded-2xl p-5 relative overflow-hidden shadow-lg">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#FF6B00]/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="p-2 bg-[#FF6B00]/10 rounded-xl text-[#FF6B00]">
+              <Mic2 size={18} />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold font-display uppercase tracking-wider text-white">
+                CHAKRA 360 OFFICIAL ARTIST LINEUP
+              </h3>
+              <p className="text-[11px] font-mono text-zinc-400">
+                Main Stage Headline Performers & Performance Roster
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 mt-4">
+            {CHAKRA_OFFICIAL_ARTIST_LINEUP.map((artist, idx) => (
+              <div 
+                key={idx} 
+                className="bg-zinc-900/80 border border-zinc-800 hover:border-[#FF6B00]/60 p-2.5 rounded-xl text-center group transition"
+              >
+                <div className="w-7 h-7 mx-auto mb-1.5 rounded-full bg-[#FF6B00]/10 border border-[#FF6B00]/20 flex items-center justify-center text-[#FF6B00] text-[10px] font-mono font-bold group-hover:bg-[#FF6B00] group-hover:text-black transition">
+                  0{idx + 1}
+                </div>
+                <div className="text-xs font-bold text-white font-display leading-tight truncate" title={artist}>
+                  {artist}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Category controls / Search Bar */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-950/40 p-4 border border-zinc-800/40 rounded-xl" id="controls-panel">
         <div className="w-full sm:w-80">

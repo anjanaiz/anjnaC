@@ -30,12 +30,12 @@ export interface GeneralTask {
 }
 
 const DEFAULT_TASKS: GeneralTask[] = [
-  { id: 'gt_1', text: 'Create the Google Form for helper registration', completed: false, date: '2026-06-16', createdAt: 1781596800000 },
-  { id: 'gt_2', text: 'Find a video editor for daily backstage update reels', completed: false, date: '2026-06-16', createdAt: 1781596810000 },
-  { id: 'gt_3', text: 'Run power failure checks for sound stall generators', completed: false, date: '2026-06-17', createdAt: 1781683200000 },
-  { id: 'gt_4', text: 'Review VIP safety velvet roping and barricade positions', completed: true, date: '2026-06-15', createdAt: 1781510400000 },
-  { id: 'gt_5', text: 'Sync final performance schedules with Kasun Kalhara', completed: false, date: '2026-06-15', createdAt: 1781510410000 },
-  { id: 'gt_6', text: 'Distribute security badges to critical stage crews', completed: false, date: '2026-06-18', createdAt: 1781769600000 }
+  { id: 'gt_1', text: 'Create the Google Form for helper registration', completed: false, date: '2026-08-08', createdAt: 1786147200000 },
+  { id: 'gt_2', text: 'Find a video editor for daily backstage update reels', completed: false, date: '2026-08-08', createdAt: 1786147210000 },
+  { id: 'gt_3', text: 'Run power failure checks for sound stall generators', completed: false, date: '2026-08-09', createdAt: 1786233600000 },
+  { id: 'gt_4', text: 'Review VIP safety velvet roping and barricade positions', completed: true, date: '2026-08-08', createdAt: 1786147220000 },
+  { id: 'gt_5', text: 'Sync final performance schedules with Wasthi & B&S', completed: false, date: '2026-08-09', createdAt: 1786233610000 },
+  { id: 'gt_6', text: 'Distribute security badges to critical stage crews', completed: false, date: '2026-08-10', createdAt: 1786320000000 }
 ];
 
 // Human-readable date converter
@@ -68,7 +68,7 @@ interface TaskPlannerTabProps {
 export function TaskPlannerTab({ eventId = 'chakra360' }: TaskPlannerTabProps) {
   const collectionName = eventId === 'kathawak' ? 'general_tasks_kathawak' : 'general_tasks';
   const storageKey = eventId === 'kathawak' ? 'kathawak_general_tasks' : 'chakra_general_tasks';
-  const defaultDate = eventId === 'kathawak' ? '2026-08-10' : '2026-06-16';
+  const defaultDate = eventId === 'kathawak' ? '2026-08-10' : '2026-08-08';
 
   const [tasks, setTasks] = useState<GeneralTask[]>(() => {
     const saved = localStorage.getItem(storageKey);
@@ -89,7 +89,7 @@ export function TaskPlannerTab({ eventId = 'chakra360' }: TaskPlannerTabProps) {
   const [newTaskText, setNewTaskText] = useState<string>('');
   
   // Custom date addition
-  const [customDateInput, setCustomDateInput] = useState<string>(eventId === 'kathawak' ? '2026-08-12' : '2026-06-19');
+  const [customDateInput, setCustomDateInput] = useState<string>(eventId === 'kathawak' ? '2026-08-12' : '2026-08-15');
   const [showAddDateModal, setShowAddDateModal] = useState<boolean>(false);
 
   // Editing state
@@ -195,7 +195,7 @@ export function TaskPlannerTab({ eventId = 'chakra360' }: TaskPlannerTabProps) {
   // Extract all dates we currently have tasks planned for + current/past default ones
   const initialPlanned = eventId === 'kathawak' 
     ? ['2026-08-10', '2026-08-11', '2026-08-12', '2026-08-13', '2026-08-14', '2026-08-15']
-    : ['2026-06-15', '2026-06-16', '2026-06-17', '2026-06-18'];
+    : ['2026-08-08', '2026-08-09', '2026-08-10', '2026-08-11', '2026-08-12', '2026-08-13', '2026-08-14', '2026-08-15'];
 
   const plannedDates = Array.from(new Set([
     ...initialPlanned,
