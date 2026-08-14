@@ -10,21 +10,21 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Stall } from '../types';
 
 const DEFAULT_STALLS: Stall[] = [
-  { id: 'stall_1', name: 'Water Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Bottled Water'], notes: '' },
-  { id: 'stall_2', name: 'Soft Drinks Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Coca-Cola', 'Sprite', 'Fanta'], notes: '' },
-  { id: 'stall_3', name: 'Cool Drinks Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Bubble Tea', 'Mojito', 'Mango Fresh Juices'], notes: '' },
-  { id: 'stall_4', name: 'Hot Drinks Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Coffee', 'Ceylon Tea', 'Thai Tea', 'Masala Tea'], notes: '' },
-  { id: 'stall_5', name: 'Rice & Kottu Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Fried Rice', 'Kottu'], notes: '' },
-  { id: 'stall_6', name: 'Fast Food Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Hot Dogs', 'Mini Burgers', 'Crispy French Fries'], notes: '' },
-  { id: 'stall_7', name: 'Ramen & Pasta Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Authentic Ramen', 'Macaroni Variations', 'Instant Noodle Dishes'], notes: '' },
-  { id: 'stall_8', name: 'Dessert Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Artisan Ice Cream', 'Glazed Donuts', 'Chocolate Dip Items'], notes: '' },
-  { id: 'stall_9', name: 'BBQ / Grill Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Flame-Grilled Chicken BBQ', 'Skewers', 'Assorted Grilled Items'], notes: '' },
-  { id: 'stall_10', name: 'Corn Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: ['Steamed Butter Corn', 'Flame Spicy Corn'], notes: '' },
-  { id: 'stall_11', name: 'Photo Booth', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: [], notes: '' },
-  { id: 'stall_12', name: 'Liquor Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: [], notes: '' },
-  { id: 'stall_13', name: 'Beer Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: [], notes: '' },
-  { id: 'stall_14', name: 'Balloon.lk Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: [], notes: '' },
-  { id: 'stall_15', name: 'Sunquick Stall', vendorName: '', whatsappNumber: '', advancePayment: 0, remainingBalance: 0, items: [], notes: '' },
+  { id: 'stall_1', name: 'Water Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Bottled Water'], notes: '' },
+  { id: 'stall_2', name: 'Soft Drinks Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Coca-Cola', 'Sprite', 'Fanta'], notes: '' },
+  { id: 'stall_3', name: 'Cool Drinks Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Bubble Tea', 'Mojito', 'Mango Fresh Juices'], notes: '' },
+  { id: 'stall_4', name: 'Hot Drinks Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Coffee', 'Ceylon Tea', 'Thai Tea', 'Masala Tea'], notes: '' },
+  { id: 'stall_5', name: 'Rice & Kottu Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Fried Rice', 'Kottu'], notes: '' },
+  { id: 'stall_6', name: 'Fast Food Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Hot Dogs', 'Mini Burgers', 'Crispy French Fries'], notes: '' },
+  { id: 'stall_7', name: 'Ramen & Pasta Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Authentic Ramen', 'Macaroni Variations', 'Instant Noodle Dishes'], notes: '' },
+  { id: 'stall_8', name: 'Dessert Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Artisan Ice Cream', 'Glazed Donuts', 'Chocolate Dip Items'], notes: '' },
+  { id: 'stall_9', name: 'BBQ / Grill Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Flame-Grilled Chicken BBQ', 'Skewers', 'Assorted Grilled Items'], notes: '' },
+  { id: 'stall_10', name: 'Corn Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: ['Steamed Butter Corn', 'Flame Spicy Corn'], notes: '' },
+  { id: 'stall_11', name: 'Photo Booth', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: [], notes: '' },
+  { id: 'stall_12', name: 'Liquor Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: [], notes: '' },
+  { id: 'stall_13', name: 'Beer Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: [], notes: '' },
+  { id: 'stall_14', name: 'Balloon.lk Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: [], notes: '' },
+  { id: 'stall_15', name: 'Sunquick Stall', vendorName: '', whatsappNumber: '', totalPrice: 75000, advancePayment: 0, remainingBalance: 75000, items: [], notes: '' },
 ];
 
 interface StallDetailsTabProps {
@@ -63,8 +63,9 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
     name: '',
     vendorName: '',
     whatsappNumber: '',
+    totalPrice: eventId === 'chakra360' ? 75000 : 75000,
     advancePayment: 0,
-    remainingBalance: 0,
+    remainingBalance: eventId === 'chakra360' ? 75000 : 75000,
     itemsText: '',
     notes: ''
   });
@@ -111,14 +112,29 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
     return () => unsubscribe();
   }, [collectionName, storageKey]);
 
+  const handleResetToDefaultTemplate = async () => {
+    if (confirm("Reset stalls to default template with LKR 75,000 total price per stall?")) {
+      setStalls(defaultList);
+      localStorage.setItem(storageKey, JSON.stringify(defaultList));
+      for (const s of defaultList) {
+        try {
+          await setDoc(doc(db, collectionName, s.id), s);
+        } catch (e) {
+          console.error("Failed to reset stall in Firestore:", e);
+        }
+      }
+    }
+  };
+
   const handleOpenAddForm = () => {
     setEditingStallId(null);
     setFormData({
       name: '',
       vendorName: '',
       whatsappNumber: '',
+      totalPrice: eventId === 'chakra360' ? 75000 : 75000,
       advancePayment: 0,
-      remainingBalance: 0,
+      remainingBalance: eventId === 'chakra360' ? 75000 : 75000,
       itemsText: '',
       notes: ''
     });
@@ -126,13 +142,15 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
   };
 
   const handleOpenEditForm = (stall: Stall) => {
+    const stallTotal = stall.totalPrice !== undefined ? stall.totalPrice : 75000;
     setEditingStallId(stall.id);
     setFormData({
       name: stall.name,
       vendorName: stall.vendorName,
       whatsappNumber: stall.whatsappNumber,
+      totalPrice: stallTotal,
       advancePayment: stall.advancePayment,
-      remainingBalance: stall.remainingBalance,
+      remainingBalance: stall.remainingBalance !== undefined ? stall.remainingBalance : (stallTotal - stall.advancePayment),
       itemsText: stall.items.join(', '),
       notes: stall.notes || ''
     });
@@ -150,13 +168,18 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
 
     const stallId = editingStallId || `stall_${Date.now()}`;
     const existingStall = stalls.find(s => s.id === stallId);
+    const totalPriceNum = Number(formData.totalPrice) || (eventId === 'chakra360' ? 75000 : 75000);
+    const advanceNum = Number(formData.advancePayment) || 0;
+    const remainingNum = Math.max(0, totalPriceNum - advanceNum);
+
     const targetStall: Stall = {
       id: stallId,
       name: formData.name.trim(),
       vendorName: formData.vendorName.trim(),
       whatsappNumber: formData.whatsappNumber.trim(),
-      advancePayment: Number(formData.advancePayment) || 0,
-      remainingBalance: Number(formData.remainingBalance) || 0,
+      totalPrice: totalPriceNum,
+      advancePayment: advanceNum,
+      remainingBalance: remainingNum,
       items: itemsArray,
       notes: formData.notes.trim(),
       createdAt: existingStall?.createdAt || Date.now()
@@ -183,21 +206,27 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
 
   // Quick edit status for simple in-row amount update
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
-  const [inlineData, setInlineData] = useState({ advancePayment: 0, remainingBalance: 0 });
+  const [inlineData, setInlineData] = useState({ totalPrice: 75000, advancePayment: 0, remainingBalance: 75000 });
 
   const handleStartInlineEdit = (stall: Stall) => {
+    const totalP = stall.totalPrice !== undefined ? stall.totalPrice : 75000;
     setInlineEditingId(stall.id);
     setInlineData({
+      totalPrice: totalP,
       advancePayment: stall.advancePayment,
-      remainingBalance: stall.remainingBalance
+      remainingBalance: stall.remainingBalance !== undefined ? stall.remainingBalance : (totalP - stall.advancePayment)
     });
   };
 
   const handleSaveInline = async (stall: Stall) => {
+    const totalP = Number(inlineData.totalPrice) || 75000;
+    const adv = Number(inlineData.advancePayment) || 0;
+    const rem = Math.max(0, totalP - adv);
     const updated = {
       ...stall,
-      advancePayment: Number(inlineData.advancePayment) || 0,
-      remainingBalance: Number(inlineData.remainingBalance) || 0
+      totalPrice: totalP,
+      advancePayment: adv,
+      remainingBalance: rem
     };
     try {
       await setDoc(doc(db, collectionName, stall.id), updated);
@@ -218,8 +247,9 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
   // Computed Stats
   const totalStallsCount = stalls.length;
   const assignedVendorsCount = stalls.filter(s => s.vendorName.trim().length > 0).length;
+  const totalStallValue = stalls.reduce((sum, s) => sum + (s.totalPrice !== undefined ? s.totalPrice : 75000), 0);
   const totalAdvancesSum = stalls.reduce((sum, s) => sum + s.advancePayment, 0);
-  const totalOutstandingsSum = stalls.reduce((sum, s) => sum + s.remainingBalance, 0);
+  const totalOutstandingsSum = stalls.reduce((sum, s) => sum + (s.remainingBalance !== undefined ? s.remainingBalance : Math.max(0, (s.totalPrice || 75000) - s.advancePayment)), 0);
 
   // Filter and Search logic
   const filteredStalls = stalls.filter(stall => {
@@ -247,27 +277,38 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
             <span className="p-1.5 rounded-lg bg-[#FF6B00]/10 text-[#FF6B00] border border-[#FF6B00]/20">
               <Sparkles size={16} />
             </span>
-            Stall Management Matrix
+            Stall Details Management {eventId === 'chakra360' ? '(CHAKRA 360)' : ''}
           </h2>
           <p className="text-xs text-white/40 mt-1 font-mono">
-            A real-time administrative ledger tracking vendor placements, payment logs, and sales schedules.
+            Commercial vendor ledger. Standard Chakra 360 stall price is locked at <span className="text-[#FF6B00] font-bold">LKR 75,000</span> per stall.
           </p>
         </div>
 
-        <button
-          onClick={handleOpenAddForm}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#FF6B00] hover:bg-[#FF852B] text-zinc-950 font-black font-mono text-xs rounded-xl transition shadow-[0_0_15px_rgba(255,107,0,0.15)] cursor-pointer select-none"
-        >
-          <Plus size={14} />
-          Register New Stall
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleResetToDefaultTemplate}
+            className="flex items-center justify-center gap-2 px-3.5 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-mono text-xs rounded-xl border border-white/10 transition cursor-pointer"
+            title="Reset stalls to default template with LKR 75,000 pricing"
+          >
+            <RefreshCw size={13} />
+            <span className="hidden sm:inline">Reset Template (75k)</span>
+          </button>
+
+          <button
+            onClick={handleOpenAddForm}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#FF6B00] hover:bg-[#FF852B] text-zinc-950 font-black font-mono text-xs rounded-xl transition shadow-[0_0_15px_rgba(255,107,0,0.15)] cursor-pointer select-none"
+          >
+            <Plus size={14} />
+            Register Stall
+          </button>
+        </div>
       </div>
 
       {/* STATS TILES ROW */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" id="stall-stats-dashboard">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5" id="stall-stats-dashboard">
         <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
           <div>
-            <span className="text-[9px] uppercase tracking-wider font-mono text-white/30 block">Total Registrations</span>
+            <span className="text-[9px] uppercase tracking-wider font-mono text-white/30 block">Total Stalls</span>
             <span className="text-2xl font-black font-display text-white mt-1 block">{totalStallsCount}</span>
           </div>
           <div className="p-2 bg-white/5 border border-white/5 rounded-xl text-zinc-400 font-mono text-[10px] font-bold">STALLS</div>
@@ -283,24 +324,34 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
           <div className="p-2 bg-blue-500/10 border border-blue-500/10 rounded-xl text-blue-400 font-mono text-[10px] font-bold">VENDORS</div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+        <div className="bg-white/5 border border-[#FF6B00]/20 p-4 rounded-2xl flex items-center justify-between">
           <div>
-            <span className="text-[9px] uppercase tracking-wider font-mono text-white/30 block">Total Advances Received</span>
-            <span className="text-2xl font-black font-display text-emerald-400 mt-1 block">
-              <span className="text-xs font-mono font-medium mr-0.5">Rs.</span>{totalAdvancesSum.toLocaleString()}
+            <span className="text-[9px] uppercase tracking-wider font-mono text-[#FF6B00] block font-bold">Total Stalls Value</span>
+            <span className="text-2xl font-black font-display text-white mt-1 block">
+              <span className="text-xs font-mono font-medium mr-0.5 text-[#FF6B00]">LKR</span>{totalStallValue.toLocaleString()}
             </span>
           </div>
-          <div className="p-2 bg-emerald-500/10 border border-emerald-500/10 rounded-xl text-emerald-400 font-mono text-[10px] font-bold">RECEIVED</div>
+          <div className="p-2 bg-[#FF6B00]/10 border border-[#FF6B00]/20 rounded-xl text-[#FF6B00] font-mono text-[10px] font-bold">@75K</div>
         </div>
 
         <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
           <div>
-            <span className="text-[9px] uppercase tracking-wider font-mono text-white/30 block">Outstanding Arrears</span>
-            <span className="text-2xl font-black font-display text-rose-400 mt-1 block">
-              <span className="text-xs font-mono font-medium mr-0.5">Rs.</span>{totalOutstandingsSum.toLocaleString()}
+            <span className="text-[9px] uppercase tracking-wider font-mono text-white/30 block">Advances Received</span>
+            <span className="text-2xl font-black font-display text-emerald-400 mt-1 block">
+              <span className="text-xs font-mono font-medium mr-0.5">LKR</span>{totalAdvancesSum.toLocaleString()}
             </span>
           </div>
-          <div className="p-2 bg-rose-500/10 border border-rose-500/10 rounded-xl text-rose-400 font-mono text-[10px] font-bold">OUTSTANDING</div>
+          <div className="p-2 bg-emerald-500/10 border border-emerald-500/10 rounded-xl text-emerald-400 font-mono text-[10px] font-bold">PAID</div>
+        </div>
+
+        <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between col-span-2 lg:col-span-1">
+          <div>
+            <span className="text-[9px] uppercase tracking-wider font-mono text-white/30 block">Pending Balance</span>
+            <span className="text-2xl font-black font-display text-rose-400 mt-1 block">
+              <span className="text-xs font-mono font-medium mr-0.5">LKR</span>{totalOutstandingsSum.toLocaleString()}
+            </span>
+          </div>
+          <div className="p-2 bg-rose-500/10 border border-rose-500/10 rounded-xl text-rose-400 font-mono text-[10px] font-bold">PENDING</div>
         </div>
       </div>
 
@@ -357,21 +408,24 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[900px]">
+            <table className="w-full text-left border-collapse min-w-[950px]">
               <thead>
                 <tr className="border-b border-white/10 bg-black/40 font-mono text-[9px] uppercase tracking-wider text-white/40">
                   <th className="py-3.5 px-4 font-bold">Stall / Vendor Details</th>
                   <th className="py-3.5 px-4 font-bold">WhatsApp / Reach</th>
                   <th className="py-3.5 px-4 font-bold">Planned Sale Items</th>
-                  <th className="py-3.5 px-4 font-bold text-right w-[150px]">Advance Payment</th>
-                  <th className="py-3.5 px-4 text-right w-[150px] font-bold">Remaining Balance</th>
+                  <th className="py-3.5 px-4 font-bold text-right w-[140px]">Total Price</th>
+                  <th className="py-3.5 px-4 font-bold text-right w-[140px]">Advance Paid</th>
+                  <th className="py-3.5 px-4 text-right w-[140px] font-bold">Pending Balance</th>
                   <th className="py-3.5 px-4 font-bold text-center w-[120px]">Status</th>
                   <th className="py-3.5 px-4 font-bold text-center w-[140px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredStalls.map((stall) => {
-                  const isOutstanding = stall.remainingBalance > 0;
+                  const stallPrice = stall.totalPrice !== undefined ? stall.totalPrice : 75000;
+                  const stallBalance = stall.remainingBalance !== undefined ? stall.remainingBalance : Math.max(0, stallPrice - stall.advancePayment);
+                  const isOutstanding = stallBalance > 0;
                   const isUnassigned = !stall.vendorName.trim();
                   const isInlineEditing = inlineEditingId === stall.id;
 
@@ -419,7 +473,7 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
                       </td>
 
                       {/* Planned Sale Items */}
-                      <td className="py-4 px-4 max-w-[320px]">
+                      <td className="py-4 px-4 max-w-[280px]">
                         {stall.items && stall.items.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {stall.items.map((item, idx) => (
@@ -436,6 +490,32 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
                         )}
                       </td>
 
+                      {/* Total Price */}
+                      <td className="py-4 px-4 text-right">
+                        {isInlineEditing ? (
+                          <div className="inline-flex flex-col items-end gap-1">
+                            <span className="text-[8px] font-mono text-white/30 uppercase">Total Fee</span>
+                            <input
+                              type="number"
+                              value={inlineData.totalPrice}
+                              onChange={(e) => {
+                                const newTot = Number(e.target.value) || 0;
+                                setInlineData(prev => ({ 
+                                  ...prev, 
+                                  totalPrice: newTot,
+                                  remainingBalance: Math.max(0, newTot - prev.advancePayment)
+                                }));
+                              }}
+                              className="w-24 bg-black/60 border border-[#FF6B00]/40 rounded px-1.5 py-1 text-right text-[11px] font-mono text-white focus:outline-none focus:border-[#FF6B00]"
+                            />
+                          </div>
+                        ) : (
+                          <span className="font-mono text-white font-bold text-xs">
+                            LKR {stallPrice.toLocaleString()}
+                          </span>
+                        )}
+                      </td>
+
                       {/* Advance Payment */}
                       <td className="py-4 px-4 text-right">
                         {isInlineEditing ? (
@@ -444,13 +524,20 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
                             <input
                               type="number"
                               value={inlineData.advancePayment}
-                              onChange={(e) => setInlineData(prev => ({ ...prev, advancePayment: Number(e.target.value) || 0 }))}
-                              className="w-24 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-right text-[11px] font-mono text-white focus:outline-none focus:border-[#FF6B00]"
+                              onChange={(e) => {
+                                const newAdv = Number(e.target.value) || 0;
+                                setInlineData(prev => ({ 
+                                  ...prev, 
+                                  advancePayment: newAdv,
+                                  remainingBalance: Math.max(0, prev.totalPrice - newAdv)
+                                }));
+                              }}
+                              className="w-24 bg-black/60 border border-emerald-500/40 rounded px-1.5 py-1 text-right text-[11px] font-mono text-emerald-400 focus:outline-none focus:border-[#FF6B00]"
                             />
                           </div>
                         ) : (
-                          <span className="font-mono text-zinc-300 text-xs">
-                            Rs. {stall.advancePayment.toLocaleString()}
+                          <span className="font-mono text-emerald-400 text-xs">
+                            LKR {stall.advancePayment.toLocaleString()}
                           </span>
                         )}
                       </td>
@@ -460,33 +547,30 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
                         {isInlineEditing ? (
                           <div className="inline-flex flex-col items-end gap-1">
                             <span className="text-[8px] font-mono text-white/30 uppercase">Balance</span>
-                            <input
-                              type="number"
-                              value={inlineData.remainingBalance}
-                              onChange={(e) => setInlineData(prev => ({ ...prev, remainingBalance: Number(e.target.value) || 0 }))}
-                              className="w-24 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-right text-[11px] font-mono text-white focus:outline-none focus:border-[#FF6B00]"
-                            />
+                            <span className="font-mono text-xs font-bold text-rose-400 py-1">
+                              LKR {inlineData.remainingBalance.toLocaleString()}
+                            </span>
                           </div>
                         ) : (
                           <span className={`font-mono text-xs font-semibold ${isOutstanding ? 'text-rose-400' : 'text-emerald-400'}`}>
-                            Rs. {stall.remainingBalance.toLocaleString()}
+                            LKR {stallBalance.toLocaleString()}
                           </span>
                         )}
                       </td>
 
                       {/* Status */}
                       <td className="py-4 px-4 text-center">
-                        {stall.remainingBalance === 0 && stall.advancePayment > 0 ? (
+                        {stallBalance === 0 && stall.advancePayment > 0 ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[8.5px] font-mono font-bold uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/20 text-emerald-400">
                             <CheckCircle2 size={10} /> Fully Paid
                           </span>
                         ) : isOutstanding ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[8.5px] font-mono font-bold uppercase tracking-wider bg-rose-500/15 border border-rose-500/20 text-rose-400">
-                            <AlertCircle size={10} /> Pending LKR
+                            <AlertCircle size={10} /> Pending
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[8.5px] font-mono font-bold uppercase tracking-wider bg-white/5 border border-white/5 text-zinc-400">
-                            No Ledger
+                            Unpaid
                           </span>
                         )}
                       </td>
@@ -622,29 +706,54 @@ export const StallDetailsTab: React.FC<StallDetailsTabProps> = ({
                   </p>
                 </div>
 
-                {/* Payments Grid */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Payments Grid with Total Price, Advance, and Remaining Balance */}
+                <div className="grid grid-cols-3 gap-3 bg-white/[0.02] border border-white/5 p-3 rounded-xl">
+                  {/* Total Price */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono uppercase text-[#FF6B00] font-bold tracking-wider">Total Price (LKR)</label>
+                    <input
+                      type="number"
+                      placeholder="75000"
+                      value={formData.totalPrice || ''}
+                      onChange={(e) => {
+                        const tot = Number(e.target.value) || 0;
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          totalPrice: tot,
+                          remainingBalance: Math.max(0, tot - prev.advancePayment)
+                        }));
+                      }}
+                      className="w-full bg-black/40 border border-[#FF6B00]/40 rounded-xl text-xs text-white px-3 py-2.5 focus:outline-none focus:border-[#FF6B00] font-mono font-bold"
+                    />
+                  </div>
+
                   {/* Advance Payment */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-mono uppercase text-white/40 tracking-wider">Advance Received (LKR)</label>
+                    <label className="text-[10px] font-mono uppercase text-emerald-400 font-bold tracking-wider">Paid Advance (LKR)</label>
                     <input
                       type="number"
                       placeholder="0"
                       value={formData.advancePayment || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, advancePayment: Number(e.target.value) || 0 }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl text-xs text-white px-3 py-2.5 focus:outline-none focus:border-[#FF6B00] font-mono"
+                      onChange={(e) => {
+                        const adv = Number(e.target.value) || 0;
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          advancePayment: adv,
+                          remainingBalance: Math.max(0, (prev.totalPrice || 75000) - adv)
+                        }));
+                      }}
+                      className="w-full bg-black/40 border border-emerald-500/40 rounded-xl text-xs text-emerald-400 px-3 py-2.5 focus:outline-none focus:border-[#FF6B00] font-mono"
                     />
                   </div>
 
                   {/* Remaining Balance */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-mono uppercase text-white/40 tracking-wider">Remaining Balance (LKR)</label>
+                    <label className="text-[10px] font-mono uppercase text-rose-400 font-bold tracking-wider">Pending (LKR)</label>
                     <input
                       type="number"
-                      placeholder="0"
-                      value={formData.remainingBalance || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, remainingBalance: Number(e.target.value) || 0 }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl text-xs text-white px-3 py-2.5 focus:outline-none focus:border-[#FF6B00] font-mono"
+                      readOnly
+                      value={formData.remainingBalance || 0}
+                      className="w-full bg-black/60 border border-rose-500/20 rounded-xl text-xs text-rose-400 px-3 py-2.5 font-mono font-bold cursor-not-allowed"
                     />
                   </div>
                 </div>

@@ -39,7 +39,7 @@ import { db, auth, loginWithGoogle, logoutUser, handleFirestoreError, OperationT
 import { chakraLogoBase64 as chakraLogo } from './assets/images/logoBase64';
 
 export default function App() {
-  const [selectedEventId, setSelectedEventId] = useState<'chakra360' | 'kathawak' | null>('chakra360');
+  const [selectedEventId, setSelectedEventId] = useState<'chakra360' | 'kathawak' | null>(null);
   const [activeTab, setActiveTab] = useState<'shoot' | 'stalls' | 'map' | 'requirements' | 'tasks' | 'budget' | 'sponsors' | 'tickets'>('shoot');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   

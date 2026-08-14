@@ -37,6 +37,7 @@ export interface Stall {
   name: string;
   vendorName: string;
   whatsappNumber: string;
+  totalPrice?: number;
   advancePayment: number;
   remainingBalance: number;
   items: string[];
