@@ -189,7 +189,7 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
   };
 
   const handleResetToDefaults = async () => {
-    if (confirm("Reset budget items to the official CHAKRA 360 Cost Analysis template (28 line items)?")) {
+    if (confirm("Reset budget items to the official CHAKRA 360 Cost Analysis template (8 Artists + 22 Other Event Costs = 30 line items)?")) {
       setItems(initialItems);
       localStorage.setItem(storageKey, JSON.stringify(initialItems));
       for (const item of initialItems) {
@@ -262,10 +262,10 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
             <button
               onClick={handleResetToDefaults}
               className="flex items-center gap-2 px-3.5 py-2 bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 rounded-xl font-mono text-xs transition cursor-pointer"
-              title="Load 28 official Chakra 360 cost items template"
+              title="Load 30 official Chakra 360 cost items template (8 Artists + 22 Other Costs)"
             >
               <Layers size={13} className="text-[#FF6B00]" />
-              <span>Load 28 Cost Items</span>
+              <span>Load 30 Cost Items</span>
             </button>
 
             <button

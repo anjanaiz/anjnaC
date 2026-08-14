@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Category, VideoItem, TaskStatus } from '../types';
-import { CHAKRA_OFFICIAL_ARTIST_LINEUP } from '../data';
+import { CHAKRA_OFFICIAL_ARTIST_LINEUP, INITIAL_CATEGORIES } from '../data';
 import { 
   Plus, 
   Trash2, 
@@ -17,7 +17,9 @@ import {
   CheckCircle,
   HelpCircle,
   Users,
-  Mic2
+  Mic2,
+  RefreshCw,
+  Video
 } from 'lucide-react';
 
 interface ShootListTabProps {
@@ -34,6 +36,38 @@ export const ShootListTab: React.FC<ShootListTabProps> = ({
   const [newCatName, setNewCatName] = useState('');
   const [isAddingCat, setIsAddingCat] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+
+  // Sync / Reset official 8 artists in Shoot List
+  const handleSyncOfficialArtists = () => {
+    if (confirm("Sync and ensure all 8 official artists (Chamara Weerasinghe, Yuki & Ravi J, Centigradz, Umaria, Raveen Tharuka, Wasthi, Rookantha Goonatillake, B&S) are added to ARTIST VIDEOS?")) {
+      const defaultArtistCategory = INITIAL_CATEGORIES.find(c => c.id === 'cat_artist_videos');
+      if (!defaultArtistCategory) return;
+
+      const existingArtistCat = categories.find(c => c.id === 'cat_artist_videos' || c.name === 'ARTIST VIDEOS');
+      
+      if (!existingArtistCat) {
+        setCategories([defaultArtistCategory, ...categories]);
+      } else {
+        // Merge missing artists into existing category
+        const existingPeople = new Set(existingArtistCat.items.map(i => i.person.toLowerCase().trim()));
+        const missingItems: VideoItem[] = defaultArtistCategory.items.filter(
+          item => !existingPeople.has(item.person.toLowerCase().trim())
+        );
+
+        const updatedCategories = categories.map(cat => {
+          if (cat.id === existingArtistCat.id) {
+            return {
+              ...cat,
+              items: [...cat.items, ...missingItems]
+            };
+          }
+          return cat;
+        });
+
+        setCategories(updatedCategories);
+      }
+    }
+  };
 
   // Inline inputs state for adding new video item
   const [addingToCatId, setAddingToCatId] = useState<string | null>(null);
@@ -236,7 +270,18 @@ export const ShootListTab: React.FC<ShootListTabProps> = ({
           />
         </div>
 
-        <div className="flex gap-3 w-full sm:w-auto justify-end">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+          {eventId === 'chakra360' && (
+            <button
+              onClick={handleSyncOfficialArtists}
+              className="bg-white/5 border border-white/10 hover:border-[#FF6B00]/60 hover:bg-[#FF6B00]/10 text-zinc-300 hover:text-white rounded-lg px-3.5 py-2 text-xs font-mono tracking-wider flex items-center gap-2 transition duration-300 w-full sm:w-auto justify-center cursor-pointer"
+              title="Sync all 8 official artists into ARTIST VIDEOS"
+            >
+              <RefreshCw size={14} className="text-[#FF6B00]" />
+              <span>SYNC 8 ARTISTS</span>
+            </button>
+          )}
+
           {isAddingCat ? (
             <form onSubmit={handleAddCategory} className="flex gap-2 w-full sm:w-auto" id="add-cat-form">
               <input

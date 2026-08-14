@@ -7,7 +7,8 @@ export const CHAKRA_OFFICIAL_ARTIST_LINEUP = [
   'Umaria',
   'Raveen Tharuka',
   'Wasthi',
-  'Rookantha Gunathilaka'
+  'Rookantha Goonatillake',
+  'B&S (Bathiya & Santhush)'
 ];
 
 export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
@@ -93,15 +94,28 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_art_7',
     category: 'Artist Cost Breakdown',
-    title: 'Rookantha Gunathilaka',
+    title: 'Rookantha Goonatillake',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
     paidAmount: 0,
     paymentStatus: 'Unpaid',
-    vendorOrSource: 'Rookantha Gunathilaka Official',
+    vendorOrSource: 'Rookantha Goonatillake Official',
     dueDate: '2026-08-08',
     notes: 'Legendary Performance Feature'
+  },
+  {
+    id: 'chbg_art_8',
+    category: 'Artist Cost Breakdown',
+    title: 'B&S (Bathiya & Santhush)',
+    type: 'Expense',
+    estimatedAmount: 0,
+    actualAmount: 0,
+    paidAmount: 0,
+    paymentStatus: 'Unpaid',
+    vendorOrSource: 'Saregama Music / B&S Management',
+    dueDate: '2026-08-08',
+    notes: 'Main Stage Special Headline Performance'
   },
 
   // --- OTHER EVENT COSTS ---
@@ -404,7 +418,8 @@ export const INITIAL_CATEGORIES: Category[] = [
       { id: 'av_4', person: 'Umaria', name: 'Vocal Performance Clip', status: 'TO SHOOT' },
       { id: 'av_5', person: 'Raveen Tharuka', name: 'Artist Feature', status: 'EDIT PENDING' },
       { id: 'av_6', person: 'Wasthi', name: 'Performance Footage & Promo', status: 'TO SHOOT' },
-      { id: 'av_7', person: 'Rookantha Gunathilaka', name: 'Legendary Performance Feature', status: 'TO SHOOT' }
+      { id: 'av_7', person: 'Rookantha Goonatillake', name: 'Legendary Performance Feature', status: 'TO SHOOT' },
+      { id: 'av_8', person: 'B&S (Bathiya & Santhush)', name: 'Main Stage Highlight Promo', status: 'TO SHOOT' }
     ]
   },
   {
