@@ -17,7 +17,8 @@ import {
   CreditCard,
   Building,
   Calendar,
-  Layers
+  Layers,
+  RefreshCw
 } from 'lucide-react';
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
@@ -58,8 +59,16 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        if (parsed.length > 0) return parsed;
+        const parsed: BudgetItem[] = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+          // Merge with initialItems to ensure all required items are present
+          const existingIds = new Set(parsed.map(i => i.id));
+          const missing = initialItems.filter(i => !existingIds.has(i.id));
+          if (missing.length === 0) {
+            return parsed;
+          }
+          return [...parsed, ...missing];
+        }
       } catch (e) {
         console.error("Failed to parse local budget items", e);
       }
@@ -76,7 +85,7 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
 
   // Form State
   const [formData, setFormData] = useState<Partial<BudgetItem>>({
-    category: 'Venue & Security',
+    category: eventId === 'chakra360' ? 'Artist Cost Breakdown' : 'Venue & Security',
     title: '',
     type: 'Expense',
     estimatedAmount: 0,
@@ -93,20 +102,37 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
     localStorage.setItem(storageKey, JSON.stringify(items));
   }, [items, storageKey]);
 
-  // Firestore real-time listener
+  // Firestore real-time listener with automatic backfilling
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, collectionName), (snapshot) => {
       const list: BudgetItem[] = [];
       snapshot.forEach(docSnap => {
         list.push(docSnap.data() as BudgetItem);
       });
-      if (list.length > 0) {
-        setItems(list);
-      } else if (initialItems.length > 0) {
+
+      if (list.length === 0 && initialItems.length > 0) {
         // Seed initial items if collection is empty
+        setItems(initialItems);
         initialItems.forEach(item => {
           setDoc(doc(db, collectionName, item.id), cleanUndefined(item)).catch(console.error);
         });
+      } else if (initialItems.length > 0) {
+        // Check if any default items are missing in Firestore list
+        const existingIds = new Set(list.map(i => i.id));
+        const missingItems = initialItems.filter(item => !existingIds.has(item.id));
+        
+        if (missingItems.length > 0) {
+          // Push missing items to Firestore so they are permanently saved
+          missingItems.forEach(item => {
+            setDoc(doc(db, collectionName, item.id), cleanUndefined(item)).catch(console.error);
+          });
+          const combined = [...list, ...missingItems];
+          setItems(combined);
+        } else {
+          setItems(list);
+        }
+      } else if (list.length > 0) {
+        setItems(list);
       }
     }, (err) => {
       handleFirestoreError(err, OperationType.GET, collectionName);
@@ -223,6 +249,18 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
     const matchesStatus = selectedStatus === 'ALL' || item.paymentStatus === selectedStatus;
 
     return matchesSearch && matchesCategory && matchesType && matchesStatus;
+  });
+
+  const sortedFilteredItems = [...filteredItems].sort((a, b) => {
+    if (eventId === 'chakra360') {
+      if (a.category === 'Artist Cost Breakdown' && b.category !== 'Artist Cost Breakdown') return -1;
+      if (a.category !== 'Artist Cost Breakdown' && b.category === 'Artist Cost Breakdown') return 1;
+      // Extract starting number if any (e.g. "10. 🎵 Band & Sound")
+      const numA = parseInt(a.title.match(/^\d+/)?.[0] || '999', 10);
+      const numB = parseInt(b.title.match(/^\d+/)?.[0] || '999', 10);
+      if (numA !== numB) return numA - numB;
+    }
+    return 0;
   });
 
   const categoriesList = eventId === 'chakra360' ? [
@@ -423,6 +461,26 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
 
       {/* BUDGET ITEMS TABLE */}
       <div className="bg-[#0D0D0D] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="p-3.5 bg-white/5 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet size={14} className="text-[#FF6B00]" />
+            <span className="text-xs font-mono font-bold text-white uppercase">Cost Analysis Ledger</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/10 text-zinc-300">
+              {sortedFilteredItems.length} of {items.length} Items
+            </span>
+          </div>
+
+          {eventId === 'chakra360' && items.length < 30 && (
+            <button
+              onClick={handleResetToDefaults}
+              className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30 hover:bg-[#FF6B00] hover:text-black transition flex items-center gap-1.5 cursor-pointer font-bold"
+            >
+              <RefreshCw size={11} />
+              <span>Load All 30 Items</span>
+            </button>
+          )}
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-zinc-300 font-mono">
             <thead className="bg-white/5 text-[10px] uppercase text-zinc-400 font-bold border-b border-white/10">
@@ -437,7 +495,7 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredItems.length === 0 ? (
+              {sortedFilteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-12 text-center text-zinc-500">
                     <FileSpreadsheet size={32} className="mx-auto mb-2 opacity-30" />
@@ -445,7 +503,7 @@ export const BudgetTrackerTab: React.FC<BudgetTrackerTabProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredItems.map(item => {
+                sortedFilteredItems.map(item => {
                   const totalPrice = item.actualAmount > 0 ? item.actualAmount : item.estimatedAmount;
                   const pending = Math.max(0, totalPrice - item.paidAmount);
                   const isPaid = item.paidAmount >= totalPrice && totalPrice > 0;

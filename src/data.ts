@@ -122,7 +122,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_10',
     category: 'Other Event Costs',
-    title: 'Band & Sound',
+    title: '10. 🎵 Band & Sound',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -135,7 +135,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_11',
     category: 'Other Event Costs',
-    title: 'Stage & Lighting',
+    title: '11. 🏗️ Stage & Lighting',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -148,7 +148,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_12',
     category: 'Other Event Costs',
-    title: 'Furniture & Event Structures',
+    title: '12. 🪑 Furniture & Event Structures',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -161,7 +161,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_13',
     category: 'Other Event Costs',
-    title: 'Generator & Power',
+    title: '13. ⚡ Generator & Power',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -174,7 +174,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_14',
     category: 'Other Event Costs',
-    title: 'Ground / Venue',
+    title: '14. 🏟️ Ground / Venue',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -187,7 +187,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_15',
     category: 'Other Event Costs',
-    title: 'Hotel & Accommodation',
+    title: '15. 🏨 Hotel & Accommodation',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -200,7 +200,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_16',
     category: 'Other Event Costs',
-    title: 'Marketing & Promotion',
+    title: '16. 📢 Marketing & Promotion',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -213,7 +213,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_17',
     category: 'Other Event Costs',
-    title: 'Dancing Team',
+    title: '17. 💃 Dancing Team',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -226,7 +226,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_18',
     category: 'Other Event Costs',
-    title: 'Tickets & Web',
+    title: '18. 🎟️ Tickets & Web',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -239,7 +239,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_19',
     category: 'Other Event Costs',
-    title: 'Security',
+    title: '19. 🛡️ Security',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -252,7 +252,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_20',
     category: 'Other Event Costs',
-    title: 'Tax',
+    title: '20. 🧾 Tax',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -265,7 +265,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_21',
     category: 'Other Event Costs',
-    title: 'Media',
+    title: '21. 📸 Media',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -278,7 +278,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_22',
     category: 'Other Event Costs',
-    title: 'Management',
+    title: '22. 👥 Management',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -291,7 +291,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_23',
     category: 'Other Event Costs',
-    title: 'Wash Room',
+    title: '23. 🚻 Wash Room',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -304,7 +304,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_24',
     category: 'Other Event Costs',
-    title: 'Wristbands',
+    title: '24. 🎫 Wristbands',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -317,7 +317,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_25',
     category: 'Other Event Costs',
-    title: 'Flags',
+    title: '25. 🚩 Flags',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -330,7 +330,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_26',
     category: 'Other Event Costs',
-    title: 'Cleaning',
+    title: '26. 🧹 Cleaning',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -343,7 +343,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_27',
     category: 'Other Event Costs',
-    title: 'Announcing',
+    title: '27. 📣 Announcing',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -356,7 +356,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_28',
     category: 'Other Event Costs',
-    title: 'Manuja Drone',
+    title: '28. 🚁 Manuja Drone',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -369,7 +369,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_29',
     category: 'Other Event Costs',
-    title: 'Food & Hospitality',
+    title: '29. 🍽️ Food & Hospitality',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -382,7 +382,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_30',
     category: 'Other Event Costs',
-    title: 'VIP Box',
+    title: '30. 👑 VIP Box',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
@@ -395,7 +395,7 @@ export const CHAKRA_INITIAL_BUDGET: BudgetItem[] = [
   {
     id: 'chbg_oth_31',
     category: 'Other Event Costs',
-    title: 'Transport',
+    title: '31. 🚐 Transport',
     type: 'Expense',
     estimatedAmount: 0,
     actualAmount: 0,
