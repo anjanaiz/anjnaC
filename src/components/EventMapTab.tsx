@@ -30,7 +30,11 @@ import {
   Beer,
   Bath,
   Package,
-  ClipboardList
+  ClipboardList,
+  Maximize2,
+  Minimize2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export const autoResolveIcon = (title: string, category: string): string => {
@@ -936,8 +940,11 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
   };
 
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [activeMarkerId, setActiveMarkerId] = useState<string | null>('m_stage_setup');
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(defaultInitialActiveId);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mapViewStyle, setMapViewStyle] = useState<'enhanced' | 'clean' | 'technical'>('enhanced');
+  const [showPinsOnMap, setShowPinsOnMap] = useState<boolean>(true);
+  const [isMapExpanded, setIsMapExpanded] = useState<boolean>(false);
 
   // Real-time synchronization unconditionally
   useEffect(() => {
@@ -1888,7 +1895,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
         <div className="absolute inset-0 bg-[radial-gradient(#ffffff03_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
         
         {/* Top telemetry status bar */}
-        <div className="flex items-center justify-between z-10 border-b border-white/5 pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 z-10 border-b border-white/5 pb-3">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] animate-ping" />
             <span className="text-[10px] font-mono uppercase tracking-widest text-white/80 font-bold flex items-center gap-1.5">
@@ -1899,11 +1906,72 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-[9px] font-mono text-white/40">
-            <span>{eventId === 'kathawak' ? 'Concert Stage & Fan Seating' : 'Projection: 2D Blueprint Ortho'}</span>
+          <div className="flex flex-wrap items-center gap-2 text-[9px] font-mono text-white/40">
+            {eventId === 'kathawak' && (
+              <div className="flex items-center bg-white/5 p-0.5 rounded-lg border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setMapViewStyle('enhanced')}
+                  className={`px-2 py-1 rounded text-[8.5px] font-mono transition cursor-pointer ${
+                    mapViewStyle === 'enhanced'
+                      ? 'bg-[#FF6B00] text-white font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  🌟 3D Arena
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapViewStyle('technical')}
+                  className={`px-2 py-1 rounded text-[8.5px] font-mono transition cursor-pointer ${
+                    mapViewStyle === 'technical'
+                      ? 'bg-[#FF6B00] text-white font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  📐 Blueprint
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapViewStyle('clean')}
+                  className={`px-2 py-1 rounded text-[8.5px] font-mono transition cursor-pointer ${
+                    mapViewStyle === 'clean'
+                      ? 'bg-[#FF6B00] text-white font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  ✨ Pure 3D Art
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowPinsOnMap(!showPinsOnMap)}
+              title={showPinsOnMap ? 'Hide layout pins to view map art' : 'Show layout pins'}
+              className={`p-1.5 rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                showPinsOnMap
+                  ? 'bg-white/5 border-white/15 text-zinc-300 hover:text-white'
+                  : 'bg-[#FF6B00]/20 border-[#FF6B00]/40 text-[#FF6B00]'
+              }`}
+            >
+              {showPinsOnMap ? <Eye size={12} /> : <EyeOff size={12} />}
+              <span className="text-[8px] font-mono hidden sm:inline">{showPinsOnMap ? 'Pins On' : 'Pins Hidden'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsMapExpanded(!isMapExpanded)}
+              title={isMapExpanded ? 'Collapse Map Size' : 'Expand Map Size'}
+              className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/15 rounded-lg text-zinc-300 hover:text-white transition cursor-pointer flex items-center gap-1"
+            >
+              {isMapExpanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+              <span className="text-[8px] font-mono hidden sm:inline">{isMapExpanded ? 'Compact' : 'Expand'}</span>
+            </button>
+
             {hoveredCoords && (
               <span className="text-white/70 bg-white/5 px-2 py-0.5 rounded border border-white/15">
-                CUR COORDS: <strong className="text-[#FF6B00]">X:{hoveredCoords.x} Y:{hoveredCoords.y}</strong>
+                X:<strong className="text-[#FF6B00]">{hoveredCoords.x}</strong> Y:<strong className="text-[#FF6B00]">{hoveredCoords.y}</strong>
               </span>
             )}
           </div>
@@ -1915,7 +1983,11 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
           onClick={handleMapClick}
           onMouseMove={handleMapMouseMove}
           onMouseLeave={handleMapMouseLeave}
-          className="relative w-full aspect-square max-w-[480px] xl:max-w-[500px] mx-auto bg-zinc-950 rounded-2xl border border-white/5 overflow-hidden my-4 cursor-crosshair group shadow-2xl shadow-black"
+          className={`relative w-full aspect-square mx-auto bg-zinc-950 rounded-2xl border border-white/10 overflow-hidden my-4 cursor-crosshair group shadow-2xl shadow-black transition-all duration-300 ${
+            isMapExpanded
+              ? 'max-w-[700px] xl:max-w-[760px]'
+              : 'max-w-[480px] xl:max-w-[500px]'
+          }`}
           id="event-blueprint-map"
         >
           {eventId === 'kathawak' ? (
@@ -1924,38 +1996,48 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
               <img 
                 src="/kathawak_stage_map.jpg" 
                 alt="Kathawak Stage Map Blueprint" 
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none rounded-2xl select-none opacity-90 brightness-105"
+                className={`absolute inset-0 w-full h-full object-cover pointer-events-none rounded-2xl select-none transition-all duration-300 ${
+                  mapViewStyle === 'clean' 
+                    ? 'opacity-100 brightness-100' 
+                    : mapViewStyle === 'technical'
+                    ? 'opacity-70 brightness-95'
+                    : 'opacity-95 brightness-105'
+                }`}
                 referrerPolicy="no-referrer"
               />
 
               {/* Glowing Blueprint Visual Accent Overlays */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none rounded-2xl" />
+              {mapViewStyle !== 'clean' && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30 pointer-events-none rounded-2xl" />
+              )}
 
               {/* Technical Schematic Overlay with Grid & Guidelines */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-45" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="kwMinorGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
-                  </pattern>
-                  <pattern id="kwMajorGrid" width="50" height="50" patternUnits="userSpaceOnUse">
-                    <rect width="50" height="50" fill="url(#kwMinorGrid)" />
-                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,107,0,0.12)" strokeWidth="1" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#kwMajorGrid)" />
+              {mapViewStyle === 'technical' && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-60" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <pattern id="kwMinorGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+                    </pattern>
+                    <pattern id="kwMajorGrid" width="50" height="50" patternUnits="userSpaceOnUse">
+                      <rect width="50" height="50" fill="url(#kwMinorGrid)" />
+                      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,107,0,0.15)" strokeWidth="1" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#kwMajorGrid)" />
 
-                {/* Outer bounds */}
-                <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="rgba(255,107,0,0.2)" strokeWidth="1.5" rx="12" />
+                  {/* Outer bounds */}
+                  <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="rgba(255,107,0,0.25)" strokeWidth="1.5" rx="12" />
 
-                {/* Axis helper alignment crosshairs */}
-                <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="rgba(255,107,0,0.15)" strokeWidth="1" strokeDasharray="4,8" />
+                  {/* Axis helper alignment crosshairs */}
+                  <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="rgba(255,107,0,0.2)" strokeWidth="1" strokeDasharray="4,8" />
 
-                {/* Subdued Section Labels */}
-                <text x="50%" y="34%" fill="rgba(255,170,0,0.7)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="1" fontWeight="bold">🎬 MAIN STAGE &amp; CINEMA SCREEN</text>
-                <text x="28%" y="62%" fill="rgba(255,255,255,0.5)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">LEFT FAN SEATING</text>
-                <text x="72%" y="62%" fill="rgba(255,255,255,0.5)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">RIGHT FAN SEATING</text>
-                <text x="50%" y="97%" fill="rgba(255,107,0,0.6)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="1">MAIN FOYER &amp; ENTRANCE</text>
-              </svg>
+                  {/* Subdued Section Labels */}
+                  <text x="50%" y="34%" fill="rgba(255,170,0,0.9)" fontSize="7.5" fontFamily="monospace" textAnchor="middle" letterSpacing="1" fontWeight="bold">🎬 MAIN STAGE &amp; CINEMA SCREEN</text>
+                  <text x="28%" y="62%" fill="rgba(255,255,255,0.7)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">LEFT FAN SEATING</text>
+                  <text x="72%" y="62%" fill="rgba(255,255,255,0.7)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">RIGHT FAN SEATING</text>
+                  <text x="50%" y="97%" fill="rgba(255,107,0,0.8)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="1">MAIN FOYER &amp; ENTRANCE</text>
+                </svg>
+              )}
 
               {/* Visual Compass design */}
               <div className="absolute bottom-3 right-3 pointer-events-none opacity-60">
@@ -2059,7 +2141,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
           )}
 
           {/* ACTIVE MAP PINS INTERACTIVE RENDER */}
-          {filteredMarkers.map(m => {
+          {showPinsOnMap && filteredMarkers.map(m => {
             const theme = getCategoryTheme(m.category);
             const isSelected = activeMarkerId === m.id;
             const isDragged = draggingMarkerId === m.id;
