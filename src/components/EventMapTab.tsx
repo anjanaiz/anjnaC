@@ -1911,17 +1911,6 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
               <div className="flex items-center bg-white/5 p-0.5 rounded-lg border border-white/10">
                 <button
                   type="button"
-                  onClick={() => setMapViewStyle('enhanced')}
-                  className={`px-2 py-1 rounded text-[8.5px] font-mono transition cursor-pointer ${
-                    mapViewStyle === 'enhanced'
-                      ? 'bg-[#FF6B00] text-white font-bold shadow-sm'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  🌟 3D Arena
-                </button>
-                <button
-                  type="button"
                   onClick={() => setMapViewStyle('technical')}
                   className={`px-2 py-1 rounded text-[8.5px] font-mono transition cursor-pointer ${
                     mapViewStyle === 'technical'
@@ -1929,7 +1918,18 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
                       : 'text-zinc-400 hover:text-white'
                   }`}
                 >
-                  📐 Blueprint
+                  📐 2D Orthographic CAD
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapViewStyle('enhanced')}
+                  className={`px-2 py-1 rounded text-[8.5px] font-mono transition cursor-pointer ${
+                    mapViewStyle === 'enhanced'
+                      ? 'bg-[#FF6B00] text-white font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  🌟 Neon Blueprint
                 </button>
                 <button
                   type="button"
@@ -1940,7 +1940,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
                       : 'text-zinc-400 hover:text-white'
                   }`}
                 >
-                  ✨ Pure 3D Art
+                  ✨ Pure Vector Plan
                 </button>
               </div>
             )}
@@ -2013,29 +2013,42 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
 
               {/* Technical Schematic Overlay with Grid & Guidelines */}
               {mapViewStyle === 'technical' && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-60" xmlns="http://www.w3.org/2000/svg">
+                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-80" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <pattern id="kwMinorGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
                     </pattern>
                     <pattern id="kwMajorGrid" width="50" height="50" patternUnits="userSpaceOnUse">
                       <rect width="50" height="50" fill="url(#kwMinorGrid)" />
-                      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,107,0,0.15)" strokeWidth="1" />
+                      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,107,0,0.12)" strokeWidth="0.8" />
                     </pattern>
                   </defs>
                   <rect width="100%" height="100%" fill="url(#kwMajorGrid)" />
 
-                  {/* Outer bounds */}
-                  <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="rgba(255,107,0,0.25)" strokeWidth="1.5" rx="12" />
+                  {/* Outer blueprint frame */}
+                  <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="rgba(255,107,0,0.3)" strokeWidth="1.5" rx="8" />
 
                   {/* Axis helper alignment crosshairs */}
-                  <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="rgba(255,107,0,0.2)" strokeWidth="1" strokeDasharray="4,8" />
+                  <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="rgba(255,107,0,0.25)" strokeWidth="1" strokeDasharray="4,6" />
+                  <line x1="2%" y1="20%" x2="98%" y2="20%" stroke="rgba(6,182,212,0.15)" strokeWidth="0.8" strokeDasharray="3,9" />
+
+                  {/* Architectural Blueprint Corner Stamps */}
+                  <g transform="translate(16, 20)">
+                    <rect x="0" y="0" width="140" height="28" fill="rgba(0,0,0,0.7)" rx="4" stroke="rgba(255,107,0,0.4)" strokeWidth="0.8" />
+                    <text x="8" y="11" fill="#FF6B00" fontSize="6.5" fontFamily="monospace" fontWeight="bold" letterSpacing="0.8">KATHAWAK – FILM IN CONCERT</text>
+                    <text x="8" y="21" fill="rgba(255,255,255,0.8)" fontSize="5.5" fontFamily="monospace" letterSpacing="0.5">STALL &amp; STAGE LAYOUT PLAN</text>
+                  </g>
+
+                  <g transform="translate(320, 20)">
+                    <rect x="0" y="0" width="144" height="18" fill="rgba(0,0,0,0.7)" rx="4" stroke="rgba(255,255,255,0.2)" strokeWidth="0.6" />
+                    <text x="8" y="12" fill="rgba(255,255,255,0.85)" fontSize="5.5" fontFamily="monospace" letterSpacing="0.5">PROJECTION: 2D BLUEPRINT ORTHO</text>
+                  </g>
 
                   {/* Subdued Section Labels */}
-                  <text x="50%" y="34%" fill="rgba(255,170,0,0.9)" fontSize="7.5" fontFamily="monospace" textAnchor="middle" letterSpacing="1" fontWeight="bold">🎬 MAIN STAGE &amp; CINEMA SCREEN</text>
-                  <text x="28%" y="62%" fill="rgba(255,255,255,0.7)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">LEFT FAN SEATING</text>
-                  <text x="72%" y="62%" fill="rgba(255,255,255,0.7)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">RIGHT FAN SEATING</text>
-                  <text x="50%" y="97%" fill="rgba(255,107,0,0.8)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="1">MAIN FOYER &amp; ENTRANCE</text>
+                  <text x="50%" y="34%" fill="rgba(255,170,0,0.9)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="1" fontWeight="bold">🎬 MAIN STAGE &amp; CINEMA SCREEN</text>
+                  <text x="28%" y="60%" fill="rgba(255,255,255,0.75)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">LEFT FAN SEATING</text>
+                  <text x="72%" y="60%" fill="rgba(255,255,255,0.75)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">RIGHT FAN SEATING</text>
+                  <text x="50%" y="97%" fill="rgba(255,107,0,0.85)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="1">MAIN FOYER &amp; ENTRANCE</text>
                 </svg>
               )}
 
