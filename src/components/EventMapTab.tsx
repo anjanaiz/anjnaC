@@ -1983,10 +1983,14 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
           onClick={handleMapClick}
           onMouseMove={handleMapMouseMove}
           onMouseLeave={handleMapMouseLeave}
-          className={`relative w-full aspect-square mx-auto bg-zinc-950 rounded-2xl border border-white/10 overflow-hidden my-4 cursor-crosshair group shadow-2xl shadow-black transition-all duration-300 ${
-            isMapExpanded
-              ? 'max-w-[700px] xl:max-w-[760px]'
-              : 'max-w-[480px] xl:max-w-[500px]'
+          className={`relative w-full mx-auto bg-zinc-950 rounded-2xl border border-white/10 overflow-hidden my-4 cursor-crosshair group shadow-2xl shadow-black transition-all duration-300 ${
+            eventId === 'kathawak'
+              ? isMapExpanded
+                ? 'aspect-[16/10] max-w-[880px]'
+                : 'aspect-[16/10] max-w-[580px] xl:max-w-[620px]'
+              : isMapExpanded
+              ? 'aspect-square max-w-[700px] xl:max-w-[760px]'
+              : 'aspect-square max-w-[480px] xl:max-w-[500px]'
           }`}
           id="event-blueprint-map"
         >
