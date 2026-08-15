@@ -567,7 +567,232 @@ const INITIAL_MARKERS: MapMarker[] = [
   }
 ];
 
-export const getZoneStatus = (x: number, y: number, category: string) => {
+const KATHAWAK_INITIAL_MARKERS: MapMarker[] = [
+  {
+    id: 'm_kw_stage_setup',
+    title: 'Stage & Screen Pod (Kathawak Chapter 2)',
+    category: 'production',
+    x: 50,
+    y: 20,
+    iconName: 'stage',
+    description: 'Kathawak Film In Concert - Chapter 2 Main Stage with hexagonal LED backdrop pod and orchestra risers.',
+    notes: 'Epicenter of orchestral cinema audio and live film sync performance.',
+    capacity: 'Orchestra & Singers (60 Cast)',
+    powerLoad: '100kW Stable',
+    resources: [
+      { id: 'res_kw_stg_1', name: 'Cinematic Curved LED Wall', quantity: 1 },
+      { id: 'res_kw_stg_2', name: 'Orchestra String Risers', quantity: 6 },
+      { id: 'res_kw_stg_3', name: 'Center Vocals Microphone Station', quantity: 4 }
+    ]
+  },
+  {
+    id: 'm_kw_left_fan',
+    title: 'Fan Seating - Left Wing',
+    category: 'hospitality',
+    x: 28,
+    y: 56,
+    iconName: 'vip',
+    description: 'Left tiered amphitheater seating wing with premium direct sightlines to the cinema screen.',
+    notes: 'Reserved VIP and Gold category seated rows.',
+    capacity: '1,200 Seated Guests',
+    powerLoad: '5kW Ambient Lights',
+    resources: [
+      { id: 'res_kw_lf_1', name: 'Numbered Tiered Seating Rows', quantity: 40 },
+      { id: 'res_kw_lf_2', name: 'Aisle Safety Guide Lighting', quantity: 12 }
+    ]
+  },
+  {
+    id: 'm_kw_right_fan',
+    title: 'Fan Seating - Right Wing',
+    category: 'hospitality',
+    x: 72,
+    y: 56,
+    iconName: 'vip',
+    description: 'Right tiered amphitheater seating wing with premium direct sightlines to the cinema screen.',
+    notes: 'Reserved VIP and Silver category seated rows.',
+    capacity: '1,200 Seated Guests',
+    powerLoad: '5kW Ambient Lights',
+    resources: [
+      { id: 'res_kw_rf_1', name: 'Numbered Tiered Seating Rows', quantity: 40 },
+      { id: 'res_kw_rf_2', name: 'Aisle Safety Guide Lighting', quantity: 12 }
+    ]
+  },
+  {
+    id: 'm_kw_central_aisle',
+    title: 'Golden Central Spine & Aisle',
+    category: 'access',
+    x: 50,
+    y: 68,
+    iconName: 'entrance',
+    description: 'Central golden dividing walkway connecting the main entrance foyer to the front stage edge.',
+    notes: 'Kept clear for artist stage walks and audience movement.',
+    capacity: 'Unrestricted transit corridor',
+    powerLoad: '2kW Lighting strip',
+    resources: [
+      { id: 'res_kw_ca_1', name: 'Gold Carpet Runner', quantity: 1 },
+      { id: 'res_kw_ca_2', name: 'Stanchion Rope Barriers', quantity: 16 }
+    ]
+  },
+  {
+    id: 'm_kw_foh',
+    title: 'FOH Audio & Cinema Master Console',
+    category: 'production',
+    x: 50,
+    y: 88,
+    iconName: 'foh',
+    description: 'Central Front Of House hub for concert audio, multi-channel surround sound, and film projector sync.',
+    notes: 'Critical command point for live film scoring.',
+    capacity: '6 Sound & Visual Engineers',
+    powerLoad: '35kW UPS',
+    resources: [
+      { id: 'res_kw_foh_1', name: '48-Channel Digital Audio Console', quantity: 1 },
+      { id: 'res_kw_foh_2', name: 'Film Timecode Synchronizer', quantity: 2 },
+      { id: 'res_kw_foh_3', name: 'Lighting Automation Desk', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_kw_left_truss',
+    title: 'Left Line Array & Truss',
+    category: 'production',
+    x: 24,
+    y: 28,
+    iconName: 'music',
+    description: 'Left side line array speaker suspension tower and spotlight truss.',
+    notes: 'Acoustic calibration optimized for cinematic bass and vocal clarity.',
+    capacity: 'Rigging zone',
+    powerLoad: '20kW Line Array',
+    resources: [
+      { id: 'res_kw_lt_1', name: 'Concert Line Array Hangs', quantity: 2 },
+      { id: 'res_kw_lt_2', name: 'Moving Head Profile Lights', quantity: 6 }
+    ]
+  },
+  {
+    id: 'm_kw_right_truss',
+    title: 'Right Line Array & Truss',
+    category: 'production',
+    x: 76,
+    y: 28,
+    iconName: 'music',
+    description: 'Right side line array speaker suspension tower and spotlight truss.',
+    notes: 'Acoustic calibration optimized for cinematic bass and vocal clarity.',
+    capacity: 'Rigging zone',
+    powerLoad: '20kW Line Array',
+    resources: [
+      { id: 'res_kw_rt_1', name: 'Concert Line Array Hangs', quantity: 2 },
+      { id: 'res_kw_rt_2', name: 'Moving Head Profile Lights', quantity: 6 }
+    ]
+  },
+  {
+    id: 'm_kw_artists_lounge',
+    title: 'Artists & Singers Green Room',
+    category: 'hospitality',
+    x: 38,
+    y: 10,
+    iconName: 'vip',
+    description: 'Exclusive backstage preparation suite and dressing rooms for featured concert vocalists.',
+    notes: 'Direct VIP corridor to stage left entry.',
+    capacity: '25 VIP Artists',
+    powerLoad: '15kW AC',
+    resources: [
+      { id: 'res_kw_ag_1', name: 'Lounge Sofas & Mirrors', quantity: 6 },
+      { id: 'res_kw_ag_2', name: 'Hospitality Refreshments Station', quantity: 1 }
+    ]
+  },
+  {
+    id: 'm_kw_orchestra_room',
+    title: 'Orchestra Musician Deck',
+    category: 'hospitality',
+    x: 62,
+    y: 10,
+    iconName: 'music',
+    description: 'Holding lounge and instrument tuning area for orchestra instrumentalists.',
+    notes: 'Secure climate controlled storage for strings and brass.',
+    capacity: '40 Musicians',
+    powerLoad: '10kW Climate',
+    resources: [
+      { id: 'res_kw_om_1', name: 'Instrument Flight Racks', quantity: 8 },
+      { id: 'res_kw_om_2', name: 'Tuning Stations', quantity: 2 }
+    ]
+  },
+  {
+    id: 'm_kw_main_entrance',
+    title: 'Main Entrance & Ticket Scanners',
+    category: 'access',
+    x: 50,
+    y: 96,
+    iconName: 'entrance',
+    description: 'Grand admissions foyer with barcode and QR ticket verification counters.',
+    notes: 'Equipped with bag inspection lanes and crowd flow barriers.',
+    capacity: '2,500 entrants / hour',
+    powerLoad: '6kW UPS',
+    resources: [
+      { id: 'res_kw_me_1', name: 'High Speed QR Scanners', quantity: 8 },
+      { id: 'res_kw_me_2', name: 'Crowd Stanchions & Barricades', quantity: 24 }
+    ]
+  },
+  {
+    id: 'm_kw_food_stall',
+    title: 'Concert Refreshments & Cafe',
+    category: 'stall',
+    x: 12,
+    y: 70,
+    iconName: 'stall',
+    description: 'Beverages, specialty snacks, and popcorn counters.',
+    notes: 'Open before show and during intermission.',
+    capacity: '6 Food Servers',
+    powerLoad: '12kW Stable',
+    resources: [
+      { id: 'res_kw_fs_1', name: 'Snack Counters & Freezers', quantity: 2 },
+      { id: 'res_kw_fs_2', name: 'Beverage Dispensers', quantity: 4 }
+    ]
+  },
+  {
+    id: 'm_kw_security',
+    title: 'Emergency Medical & Security Command',
+    category: 'health_and_security',
+    x: 88,
+    y: 70,
+    iconName: 'security',
+    description: 'First aid paramedic team with ambulance standby and security dispatch.',
+    notes: 'Direct emergency exit gate access.',
+    capacity: '8 Safety Personnel',
+    powerLoad: '4kW UPS',
+    resources: [
+      { id: 'res_kw_sec_1', name: 'Emergency Medical Kit & Stretcher', quantity: 2 },
+      { id: 'res_kw_sec_2', name: 'Two-Way Security Radio Transceivers', quantity: 10 }
+    ]
+  }
+];
+
+export const getZoneStatus = (x: number, y: number, category: string, eventId: string = 'chakra360') => {
+  if (eventId === 'kathawak') {
+    if (category === 'production') {
+      return {
+        inside: y < 35,
+        radius: Math.round(Math.sqrt((x-50)**2 + (y-20)**2)),
+        zone: y < 35 ? 'Stage & Screen Podium' : 'Audience / Rigging Area',
+        safe: true,
+        hint: 'Production & Rigging positioned appropriately.'
+      };
+    }
+    if (y >= 35 && y <= 85 && x >= 20 && x <= 80) {
+      return {
+        inside: true,
+        radius: Math.round(Math.sqrt((x-50)**2 + (y-50)**2)),
+        zone: 'Fan-Shaped Audience Seating Arena',
+        safe: category === 'hospitality' || category === 'access',
+        hint: category === 'stall' ? '⚠️ Caution: Stalls should be positioned outside the tiered seating fan area.' : 'Audience Seating & Aisle Zone'
+      };
+    }
+    return {
+      inside: false,
+      radius: Math.round(Math.sqrt((x-50)**2 + (y-50)**2)),
+      zone: y < 35 ? 'Backstage / Artists Deck' : 'Foyer & Perimeter Facilities Belt',
+      safe: true,
+      hint: 'Safe: Facility located in perimeter services zone.'
+    };
+  }
+
   const dx = x - 50;
   const dy = y - 50;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -606,10 +831,12 @@ interface EventMapTabProps {
 }
 
 export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' }) => {
+  const defaultInitialMarkers = eventId === 'kathawak' ? KATHAWAK_INITIAL_MARKERS : INITIAL_MARKERS;
+  const defaultInitialActiveId = eventId === 'kathawak' ? 'm_kw_stage_setup' : 'm_stage_setup';
   const markersCollection = eventId === 'kathawak' ? 'map_markers_kathawak' : 'map_markers';
   const categoriesCollection = eventId === 'kathawak' ? 'map_categories_kathawak' : 'map_categories';
-  const markersStorageKey = eventId === 'kathawak' ? 'kathawak_map_markers' : 'chakra_event_layout_markers_v4';
-  const categoriesStorageKey = eventId === 'kathawak' ? 'kathawak_map_categories' : 'chakra_event_custom_categories_v4';
+  const markersStorageKey = eventId === 'kathawak' ? 'kathawak_map_markers_v2' : 'chakra_event_layout_markers_v4';
+  const categoriesStorageKey = eventId === 'kathawak' ? 'kathawak_map_categories_v2' : 'chakra_event_custom_categories_v4';
 
   const [markers, setMarkersRaw] = useState<MapMarker[]>(() => {
     const saved = localStorage.getItem(markersStorageKey);
@@ -624,7 +851,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
         }
       } catch (_) {}
     }
-    return INITIAL_MARKERS;
+    return defaultInitialMarkers;
   });
 
   const [customCategories, setCustomCategoriesRaw] = useState<string[]>(() => {
@@ -749,7 +976,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
       try {
         const snap = await getDocs(collection(db, markersCollection));
         if (snap.empty) {
-          for (const m of INITIAL_MARKERS) {
+          for (const m of defaultInitialMarkers) {
             await setDoc(doc(db, markersCollection, m.id), m);
           }
         }
@@ -766,6 +993,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
   }, [markersCollection, categoriesCollection, markersStorageKey, categoriesStorageKey]);
 
   useEffect(() => {
+    if (eventId !== 'chakra360') return;
     const fetchGitDataOnMount = async () => {
       try {
         const res = await fetch("/api/github/data");
@@ -783,7 +1011,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
       }
     };
     fetchGitDataOnMount();
-  }, []);
+  }, [eventId]);
 
   useEffect(() => {
     localStorage.setItem('chakra_event_custom_categories_v4', JSON.stringify(customCategories));
@@ -1030,11 +1258,11 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
     };
 
     // Interactive circular zone check
-    const zoneInfo = getZoneStatus(newX, newY, finalCategory);
+    const zoneInfo = getZoneStatus(newX, newY, finalCategory, eventId);
     if (!zoneInfo.safe) {
       triggerConfirm(
         "🚨 RESTRICTION WARNING",
-        `"${newTitle.trim()}" is positioned inside the seated audience circle (Distance: ${zoneInfo.radius} units from stage).\n\nAll non-production facilities must be placed outside the circular audience zone (Radius: 30 units).\n\nAre you sure you want to pin this anyway?`,
+        `"${newTitle.trim()}" is positioned inside the ${zoneInfo.zone} (Distance: ${zoneInfo.radius} units).\n\n${zoneInfo.hint}\n\nAre you sure you want to pin this anyway?`,
         performAdd,
         "Pin Stall Anyway",
         "Cancel"
@@ -1064,8 +1292,8 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
       "REVERT LAYOUT",
       "Are you sure you want to revert the layout to the master template? This will remove all of your custom added stalls and data points.",
       () => {
-        setMarkers(INITIAL_MARKERS);
-        setActiveMarkerId('m_stage_setup');
+        setMarkers(defaultInitialMarkers);
+        setActiveMarkerId(defaultInitialActiveId);
       },
       "Revert Layout",
       "Cancel"
@@ -1337,8 +1565,12 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
         <div className="space-y-4 overflow-y-auto pr-1 flex-1">
           <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
             <div>
-              <h3 className="text-sm font-bold font-display text-white tracking-tight">Layout & Stalls Directory</h3>
-              <span className="text-[9px] font-mono text-white/40 uppercase block tracking-wider">Chakra 360 Site Blueprint</span>
+              <h3 className="text-sm font-bold font-display text-white tracking-tight">
+                {eventId === 'kathawak' ? 'Kathawak Stage & Seating Directory' : 'Layout & Stalls Directory'}
+              </h3>
+              <span className="text-[9px] font-mono text-white/40 uppercase block tracking-wider">
+                {eventId === 'kathawak' ? 'Kathawak Chapter 2 Blueprint' : 'Chakra 360 Site Blueprint'}
+              </span>
             </div>
             <button
               onClick={() => {
@@ -1442,7 +1674,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
 
               {/* REAL-TIME AUDIENCE CIRCLE BOUNDS DETECTOR */}
               {(() => {
-                const info = getZoneStatus(newX, newY, newCategory === '_new_' ? (customCategoryName.trim().toLowerCase() || 'custom') : newCategory);
+                const info = getZoneStatus(newX, newY, newCategory === '_new_' ? (customCategoryName.trim().toLowerCase() || 'custom') : newCategory, eventId);
                 if (!info.safe) {
                   return (
                     <div className="bg-red-650/10 border border-red-500/30 p-2 rounded-xl text-[8.5px] font-mono text-red-400 tracking-tight leading-normal animate-pulse">
@@ -1452,7 +1684,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
                 }
                 return (
                   <div className="bg-emerald-500/5 border border-emerald-500/20 p-2 rounded-xl text-[8px] font-mono text-emerald-400/80 tracking-tight">
-                    🎯 Boundary Check: {info.zone} - Safe Outside Zone (Distance: {info.radius} units)
+                    🎯 Boundary Check: {info.zone} - Safe (Distance: {info.radius} units)
                   </div>
                 );
               })()}
@@ -1661,12 +1893,14 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
             <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] animate-ping" />
             <span className="text-[10px] font-mono uppercase tracking-widest text-white/80 font-bold flex items-center gap-1.5">
               <Compass className="text-[#FF6B00] animate-spin-slow" size={12} />
-              SLAF Grounds Colombo 2D Layout Plan
+              {eventId === 'kathawak'
+                ? 'Kathawak Film In Concert – Chapter 2 Arena Blueprint'
+                : 'SLAF Grounds Colombo 2D Layout Plan'}
             </span>
           </div>
 
           <div className="flex items-center gap-4 text-[9px] font-mono text-white/40">
-            <span>Projection: 2D Blueprint Ortho</span>
+            <span>{eventId === 'kathawak' ? 'Concert Stage & Fan Seating' : 'Projection: 2D Blueprint Ortho'}</span>
             {hoveredCoords && (
               <span className="text-white/70 bg-white/5 px-2 py-0.5 rounded border border-white/15">
                 CUR COORDS: <strong className="text-[#FF6B00]">X:{hoveredCoords.x} Y:{hoveredCoords.y}</strong>
@@ -1684,67 +1918,118 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
           className="relative w-full aspect-square max-w-[480px] xl:max-w-[500px] mx-auto bg-zinc-950 rounded-2xl border border-white/5 overflow-hidden my-4 cursor-crosshair group shadow-2xl shadow-black"
           id="event-blueprint-map"
         >
-          {/* SVG Map Schematics Infrastructure Grid */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-35" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="minorGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
-              </pattern>
-              <pattern id="majorGrid" width="50" height="50" patternUnits="userSpaceOnUse">
-                <rect width="50" height="50" fill="url(#minorGrid)" />
-                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,107,0,0.08)" strokeWidth="1" />
-              </pattern>
-            </defs>
-            {/* Grid overlay */}
-            <rect width="100%" height="100%" fill="url(#majorGrid)" />
+          {eventId === 'kathawak' ? (
+            <>
+              {/* Kathawak Chapter 2 Custom Background Map Image */}
+              <img 
+                src="/kathawak_stage_map.jpg" 
+                alt="Kathawak Stage Map Blueprint" 
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none rounded-2xl select-none opacity-90 brightness-105"
+                referrerPolicy="no-referrer"
+              />
 
-            {/* Circular Seated Audience Area with 30-unit radius (30% radius on 100% canvas) in SVG */}
-            <circle cx="50%" cy="50%" r="30%" fill="rgba(255,107,0,0.02)" stroke="rgba(255,107,0,0.3)" strokeWidth="1.5" strokeDasharray="6,4" />
-            
-            {/* Standing Audience outer boundary circle */}
-            <circle cx="50%" cy="50%" r="43%" fill="none" stroke="rgba(6,182,212,0.15)" strokeWidth="1" strokeDasharray="4,4" />
-            
-            {/* Concentric helper distances loops from Stage */}
-            <circle cx="50%" cy="50%" r="15%" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="1,5" />
+              {/* Glowing Blueprint Visual Accent Overlays */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none rounded-2xl" />
 
-            {/* Outer Security & Event boundaries */}
-            <rect x="3%" y="3%" width="94%" height="94%" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" />
-            <rect x="4%" y="4%" width="92%" height="92%" fill="none" stroke="rgba(16,185,129,0.1)" strokeWidth="1" strokeDasharray="10,6" />
+              {/* Technical Schematic Overlay with Grid & Guidelines */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-45" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="kwMinorGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+                  </pattern>
+                  <pattern id="kwMajorGrid" width="50" height="50" patternUnits="userSpaceOnUse">
+                    <rect width="50" height="50" fill="url(#kwMinorGrid)" />
+                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,107,0,0.12)" strokeWidth="1" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#kwMajorGrid)" />
 
-            {/* Axis helper alignment crosshairs */}
-            <line x1="50%" y1="4%" x2="50%" y2="96%" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="3,12" />
-            <line x1="4%" y1="50%" x2="96%" y2="50%" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="3,12" />
+                {/* Outer bounds */}
+                <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="rgba(255,107,0,0.2)" strokeWidth="1.5" rx="12" />
 
-            {/* Layout labels printed in mono style */}
-            <text x="50%" y="38%" fill="rgba(255,107,0,0.3)" fontSize="8" fontFamily="monospace" textAnchor="middle" letterSpacing="1" fontWeight="bold">📌 SEATED AUDIENCE SECTION</text>
-            <text x="50%" y="42%" fill="rgba(255,107,0,0.2)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">INNER ZONE (RADIUS 30 UNITS)</text>
-            
-            <text x="50%" y="12%" fill="rgba(6,182,212,0.3)" fontSize="8" fontFamily="monospace" textAnchor="middle" letterSpacing="1.5" fontWeight="bold">👥 STANDING AUDIENCE ZONE</text>
-            <text x="50%" y="16%" fill="rgba(6,182,212,0.2)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">OUTSIDE THE CIRCULAR SEATED BELT</text>
-            
-            <text x="53%" y="97.5%" fill="rgba(255,255,255,0.15)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">STALLS & FACILITIES MUST BE OUTSIDE SEATED BELT (COORDS DIST &gt; 30)</text>
-          </svg>
+                {/* Axis helper alignment crosshairs */}
+                <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="rgba(255,107,0,0.15)" strokeWidth="1" strokeDasharray="4,8" />
 
-          {/* Center Stage Arena performance backplate */}
-          <div className="absolute top-[42%] left-[42%] w-[16%] h-[16%] bg-gradient-radial from-[#FF6B00]/15 via-black to-transparent border border-[#FF6B00]/30 rounded-full flex flex-col items-center justify-center pointer-events-none z-0">
-            <div className="w-[85%] h-[85%] border border-[#FF6B00]/20 rounded-full border-dashed animate-spin-slow flex items-center justify-center">
-              <Sparkles className="text-[#FF6B00]/70 animate-pulse" size={12} />
-            </div>
-            <span className="text-[6px] text-[#FF6B00] font-mono tracking-widest uppercase font-extrabold absolute -top-4 px-1 py-0.5 bg-black/90 border border-[#FF6B00]/20 rounded shadow-lg">CENTER STAGE</span>
-          </div>
+                {/* Subdued Section Labels */}
+                <text x="50%" y="34%" fill="rgba(255,170,0,0.7)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="1" fontWeight="bold">🎬 MAIN STAGE &amp; CINEMA SCREEN</text>
+                <text x="28%" y="62%" fill="rgba(255,255,255,0.5)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">LEFT FAN SEATING</text>
+                <text x="72%" y="62%" fill="rgba(255,255,255,0.5)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">RIGHT FAN SEATING</text>
+                <text x="50%" y="97%" fill="rgba(255,107,0,0.6)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="1">MAIN FOYER &amp; ENTRANCE</text>
+              </svg>
 
-          {/* Seated Area visual circular bounds */}
-          <div className="absolute top-[20%] left-[20%] w-[60%] h-[60%] border border-dashed border-[#FF6B00]/10 rounded-full bg-[#FF6B00]/[0.005] pointer-events-none flex items-center justify-center">
-            <span className="text-[6px] text-[#FF6B00]/25 font-mono tracking-widest uppercase font-black absolute bottom-4">SEATED AUDIENCE OUTER CIRCLE</span>
-          </div>
+              {/* Visual Compass design */}
+              <div className="absolute bottom-3 right-3 pointer-events-none opacity-60">
+                <div className="w-10 h-10 rounded-full border border-white/20 bg-black/60 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                  <Compass className="text-[#FF6B00] animate-spin-slow" size={16} />
+                  <div className="absolute text-[6px] font-mono text-white/70 -top-1 left-3.5">N</div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* SVG Map Schematics Infrastructure Grid for Chakra 360 */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-35" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="minorGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+                  </pattern>
+                  <pattern id="majorGrid" width="50" height="50" patternUnits="userSpaceOnUse">
+                    <rect width="50" height="50" fill="url(#minorGrid)" />
+                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,107,0,0.08)" strokeWidth="1" />
+                  </pattern>
+                </defs>
+                {/* Grid overlay */}
+                <rect width="100%" height="100%" fill="url(#majorGrid)" />
 
-          {/* Visual Compass design */}
-          <div className="absolute bottom-4 right-4 pointer-events-none opacity-40">
-            <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center">
-              <Compass className="text-white animate-spin-slow" size={18} />
-              <div className="absolute text-[6px] font-mono text-white/50 -top-1 left-4">N</div>
-            </div>
-          </div>
+                {/* Circular Seated Audience Area with 30-unit radius (30% radius on 100% canvas) in SVG */}
+                <circle cx="50%" cy="50%" r="30%" fill="rgba(255,107,0,0.02)" stroke="rgba(255,107,0,0.3)" strokeWidth="1.5" strokeDasharray="6,4" />
+                
+                {/* Standing Audience outer boundary circle */}
+                <circle cx="50%" cy="50%" r="43%" fill="none" stroke="rgba(6,182,212,0.15)" strokeWidth="1" strokeDasharray="4,4" />
+                
+                {/* Concentric helper distances loops from Stage */}
+                <circle cx="50%" cy="50%" r="15%" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="1,5" />
+
+                {/* Outer Security & Event boundaries */}
+                <rect x="3%" y="3%" width="94%" height="94%" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" />
+                <rect x="4%" y="4%" width="92%" height="92%" fill="none" stroke="rgba(16,185,129,0.1)" strokeWidth="1" strokeDasharray="10,6" />
+
+                {/* Axis helper alignment crosshairs */}
+                <line x1="50%" y1="4%" x2="50%" y2="96%" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="3,12" />
+                <line x1="4%" y1="50%" x2="96%" y2="50%" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="3,12" />
+
+                {/* Layout labels printed in mono style */}
+                <text x="50%" y="38%" fill="rgba(255,107,0,0.3)" fontSize="8" fontFamily="monospace" textAnchor="middle" letterSpacing="1" fontWeight="bold">📌 SEATED AUDIENCE SECTION</text>
+                <text x="50%" y="42%" fill="rgba(255,107,0,0.2)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">INNER ZONE (RADIUS 30 UNITS)</text>
+                
+                <text x="50%" y="12%" fill="rgba(6,182,212,0.3)" fontSize="8" fontFamily="monospace" textAnchor="middle" letterSpacing="1.5" fontWeight="bold">👥 STANDING AUDIENCE ZONE</text>
+                <text x="50%" y="16%" fill="rgba(6,182,212,0.2)" fontSize="6.5" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">OUTSIDE THE CIRCULAR SEATED BELT</text>
+                
+                <text x="53%" y="97.5%" fill="rgba(255,255,255,0.15)" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">STALLS & FACILITIES MUST BE OUTSIDE SEATED BELT (COORDS DIST &gt; 30)</text>
+              </svg>
+
+              {/* Center Stage Arena performance backplate */}
+              <div className="absolute top-[42%] left-[42%] w-[16%] h-[16%] bg-gradient-radial from-[#FF6B00]/15 via-black to-transparent border border-[#FF6B00]/30 rounded-full flex flex-col items-center justify-center pointer-events-none z-0">
+                <div className="w-[85%] h-[85%] border border-[#FF6B00]/20 rounded-full border-dashed animate-spin-slow flex items-center justify-center">
+                  <Sparkles className="text-[#FF6B00]/70 animate-pulse" size={12} />
+                </div>
+                <span className="text-[6px] text-[#FF6B00] font-mono tracking-widest uppercase font-extrabold absolute -top-4 px-1 py-0.5 bg-black/90 border border-[#FF6B00]/20 rounded shadow-lg">CENTER STAGE</span>
+              </div>
+
+              {/* Seated Area visual circular bounds */}
+              <div className="absolute top-[20%] left-[20%] w-[60%] h-[60%] border border-dashed border-[#FF6B00]/10 rounded-full bg-[#FF6B00]/[0.005] pointer-events-none flex items-center justify-center">
+                <span className="text-[6px] text-[#FF6B00]/25 font-mono tracking-widest uppercase font-black absolute bottom-4">SEATED AUDIENCE OUTER CIRCLE</span>
+              </div>
+
+              {/* Visual Compass design */}
+              <div className="absolute bottom-4 right-4 pointer-events-none opacity-40">
+                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center">
+                  <Compass className="text-white animate-spin-slow" size={18} />
+                  <div className="absolute text-[6px] font-mono text-white/50 -top-1 left-4">N</div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Dynamic Helper Overlay when in Placement Mode */}
           {showAddForm && (
@@ -1890,11 +2175,11 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
                   };
 
                   // Interactive circular zone check during edit submission
-                  const zoneInfo = getZoneStatus(editX, editY, updatedCategory);
+                  const zoneInfo = getZoneStatus(editX, editY, updatedCategory, eventId);
                   if (!zoneInfo.safe) {
                     triggerConfirm(
                       "🚨 RESTRICTION WARNING",
-                      `"${editTitle.trim()}" is positioned inside the seated audience circle (Distance: ${zoneInfo.radius} units from stage).\n\nAll non-production facilities must be placed outside the circular audience zone (Radius: 30 units).\n\nDo you want to apply these coordinates anyway?`,
+                      `"${editTitle.trim()}" is positioned inside the ${zoneInfo.zone} (Distance: ${zoneInfo.radius} units).\n\n${zoneInfo.hint}\n\nDo you want to apply these coordinates anyway?`,
                       performSave,
                       "Apply Coordinates",
                       "Cancel"
@@ -2066,7 +2351,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
 
                   {/* REAL-TIME EDITING AUDIENCE ZONE DETECTOR */}
                   {(() => {
-                    const info = getZoneStatus(editX, editY, editCategory === '_new_' ? (editCustomCategoryName.trim().toLowerCase() || 'custom') : editCategory);
+                    const info = getZoneStatus(editX, editY, editCategory === '_new_' ? (editCustomCategoryName.trim().toLowerCase() || 'custom') : editCategory, eventId);
                     if (!info.safe) {
                       return (
                         <div className="bg-red-500/10 border border-red-500/30 p-2 rounded-xl text-[8.5px] font-mono text-red-400 tracking-tight leading-normal text-center animate-pulse">
@@ -2076,7 +2361,7 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
                     }
                     return (
                       <div className="bg-emerald-500/5 border border-emerald-500/15 p-2 rounded-xl text-[8px] font-mono text-emerald-400/80 tracking-tight text-center">
-                        🎯 Boundary Check: {info.zone} - Safe Outside Zone (Distance: {info.radius} units)
+                        🎯 Boundary Check: {info.zone} - Safe (Distance: {info.radius} units)
                       </div>
                     );
                   })()}
@@ -2191,14 +2476,14 @@ export const EventMapTab: React.FC<EventMapTabProps> = ({ eventId = 'chakra360' 
 
                 {/* Real-time boundary check within the selected point display */}
                 {(() => {
-                  const info = getZoneStatus(selectedMarker.x, selectedMarker.y, selectedMarker.category);
+                  const info = getZoneStatus(selectedMarker.x, selectedMarker.y, selectedMarker.category, eventId);
                   if (!info.safe) {
                     return (
                       <div className="text-[9px] bg-red-950/20 border border-red-500/30 p-2.5 rounded-xl flex items-start gap-2 text-red-400">
                         <Info size={12} className="text-red-400 shrink-0 mt-0.5 animate-pulse" />
                         <div>
                           <strong className="text-[8px] uppercase font-mono font-bold block mb-0.5 text-red-400 animate-pulse">⚠️ AUDIENCE ZONE COMPLIANCE FAILURE:</strong>
-                          <span>This item sits inside the 30-unit circular seated audience zone. Please edit or relocate this layout piece to avoid seating obstructions!</span>
+                          <span>{info.hint}</span>
                         </div>
                       </div>
                     );
